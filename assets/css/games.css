@@ -1,0 +1,182 @@
+/* assets/css/games.css */
+
+.game-container {
+    width: 100%;
+    height: 100%;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    text-align: center;
+    animation: fadeIn 0.5s ease;
+    position: relative;
+    padding: 10px;
+    user-select: none;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.game-title {
+    font-family: var(--hp-font);
+    font-size: 34px; /* ЗБІЛЬШЕНО */
+    color: var(--accent);
+    margin: 20px 0 10px 0;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+    position: relative;
+    z-index: 20;
+}
+
+.game-instruction {
+    font-size: 19px; /* ЗБІЛЬШЕНО */
+    margin-bottom: 10px;
+    color: rgba(255,255,255,0.8);
+    position: relative;
+    z-index: 20;
+}
+
+/* --- ГРА 1: ПАЗЛИ --- */
+.puzzle-area {
+    position: relative;
+    width: 100%;
+    height: 60vh; 
+    min-height: 450px;
+    background: rgba(0,0,0,0.2);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 12px;
+    overflow: visible; 
+    touch-action: none;
+    margin-bottom: 20px;
+}
+
+.puzzle-board-guide {
+    position: absolute;
+    top: 51%;
+    left: 51%;
+    transform: translate(-50%, -50%);
+    width: 320px;
+    height: 180px;
+    background-image: url('../img/castle.jpg'); 
+    background-size: 320px 180px;
+    background-repeat: no-repeat;
+    opacity: 0.2; 
+    box-shadow: 0 0 30px rgba(0,0,0,0.5);
+    z-index: 0;
+    border-radius: 4px;
+    outline: 1px dashed rgba(255,255,255,0.3);
+    transition: transform 0.3s ease;
+}
+
+.puzzle-piece {
+    position: absolute;
+    cursor: grab;
+    z-index: 10;
+    filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.6));
+    transition: transform 0.1s;
+    touch-action: none;
+    background-repeat: no-repeat;
+    background-origin: border-box; 
+    border-radius: 0; 
+}
+
+.puzzle-piece:active {
+    cursor: grabbing;
+    transform: scale(1.1);
+    z-index: 9999 !important;
+    filter: drop-shadow(5px 10px 15px rgba(0,0,0,0.8));
+}
+
+.puzzle-piece.snapped {
+    transition: top 0.2s ease, left 0.2s ease;
+    z-index: 5;
+    cursor: default;
+    pointer-events: none;
+    filter: brightness(1.05); 
+}
+
+@media (max-width: 600px) {
+    .puzzle-area { height: 70vh; }
+    .puzzle-board-guide { transform: translate(-50%, -50%) scale(0.9); }
+}
+
+/* --- ГРА 2: КУЛЯ --- */
+.orb-container {
+    position: relative;
+    width: 240px;
+    height: 240px;
+    margin: 20px auto;
+}
+
+.glass-ball {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    position: relative;
+    overflow: hidden;
+    background: radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.1) 15%, rgba(255, 255, 255, 0.05) 40%, rgba(0, 0, 0, 0.4) 80%, rgba(0, 0, 0, 0.9) 100%);
+    box-shadow: inset -10px -10px 20px rgba(0,0,0,0.8), inset 10px 10px 20px rgba(255,255,255,0.25), 0 0 40px rgba(0,0,0,0.6);
+    border: 1px solid rgba(255,255,255,0.15);
+    z-index: 5;
+}
+
+.smoke-fill {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 0%;
+    opacity: 0;
+    background: radial-gradient(circle at 50% 0%, rgba(255,255,255,0.9), transparent 80%);
+    filter: blur(20px);
+    transition: height 3s ease-in-out, opacity 1s ease-in;
+    z-index: -1;
+    transform: scale(1.2);
+}
+
+.smoke-fill.active { height: 75%; opacity: 1; }
+
+.shake-btn {
+    margin-top: 25px;
+    padding: 14px 28px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05));
+    border: 1px solid rgba(255,255,255,0.4);
+    color: white;
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 20px; /* ЗБІЛЬШЕНО */
+    font-weight: bold;
+    letter-spacing: 1px;
+    transition: all 0.3s;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    font-family: var(--sys-font);
+}
+
+.shake-btn:hover {
+    background: rgba(255,255,255,0.25);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+}
+
+/* --- ГРА 3: ЗАМОК --- */
+.spell-area {
+    position: relative;
+    width: 300px;
+    height: 350px;
+    background: rgba(0,0,0,0.25);
+    border-radius: 16px;
+    touch-action: none; 
+    margin: 10px auto;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+
+canvas { position: absolute; top: 0; left: 0; z-index: 10; border-radius: 16px; }
+.spell-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; opacity: 0.3; pointer-events: none; }
+
+.modal-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px);
+    display: flex; align-items: center; justify-content: center; z-index: 2000; animation: fadeIn 0.3s;
+}
+
+.modal-content {
+    background: #151515; border: 2px solid var(--accent); padding: 30px; border-radius: 16px; text-align: center; box-shadow: 0 0 60px rgba(196, 59, 59, 0.5); max-width: 85%; width: 320px;
+}
