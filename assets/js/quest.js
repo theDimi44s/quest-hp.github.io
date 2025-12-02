@@ -84,7 +84,7 @@ function resetState(){
 function renderQuestion(index){
   if(!questEl || !questData) return;
   
-  // Якщо питання закінчились — ігри
+  // Якщо питання закінчились — переходимо до ігор
   if(index < 0 || index >= keys.length) { 
       startMiniGames(); 
       return; 
@@ -152,17 +152,16 @@ function handleChoice(value){
   }, 200);
 }
 
-// === ВИПРАВЛЕНА ЛОГІКА КНОПКИ НАЗАД ===
+// === ЛОГІКА КНОПКИ НАЗАД ===
 if(btnBack){
     btnBack.addEventListener('click', () => {
         if(historyStack.length <= 1) return; 
 
-        // 1. Видаляємо поточне питання зі стеку (ми йдемо з нього)
+        // 1. Видаляємо поточне питання зі стеку
         historyStack.pop(); 
         
         // 2. Отримуємо індекс попереднього питання
         const prevIndex = historyStack.pop(); 
-        // (Ми його теж видаляємо, бо renderQuestion додасть його знову)
 
         // 3. Видаляємо останню відповідь
         const lastVal = window.historyValues.pop();
@@ -175,11 +174,21 @@ if(btnBack){
 
 function startMiniGames() {
     if(btnBack) btnBack.style.display = 'none';
-    if(subEl) subEl.textContent = "Випробування магії";
     if(progressBar) progressBar.style.width = '100%';
 
+    // Обчислюємо попереднього лідера для Кулі Пророцтв
+    const total = Object.values(score).reduce((s,v)=> s+v, 0) || 1;
+    const pct = {
+        A: score.A, B: score.B, C: score.C, D: score.D
+    };
+    let winner = 'A';
+    if(pct.B > pct[winner]) winner = 'B';
+    if(pct.C > pct[winner]) winner = 'C';
+    if(pct.D > pct[winner]) winner = 'D';
+
+    // Старт ланцюжка ігор
     startPuzzle(questEl, () => {
-        startOrb(questEl, () => {
+        startOrb(questEl, winner, () => {
             startSpell(questEl, () => {
                 renderResult();
             });
@@ -192,6 +201,7 @@ function renderResult(){
   if(subEl) subEl.textContent = "Розподіл завершено";
 
   const total = Object.values(score).reduce((s,v)=> s+v, 0) || 1;
+  // (Відсотки можна використовувати для аналітики, тут просто визначаємо переможця)
   const pct = {
     A: Math.round((score.A / total)*100),
     B: Math.round((score.B / total)*100),
@@ -233,16 +243,8 @@ function renderResult(){
   wrap.appendChild(title);
   wrap.appendChild(actions);
 
-  const houseBg = document.createElement('div');
-  houseBg.style.width = '100%';
-  houseBg.style.height = '180px';
-  houseBg.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('${houseBackgrounds[winner]}')`;
-  houseBg.style.backgroundSize = 'cover';
-  houseBg.style.backgroundPosition = 'center';
-  houseBg.style.borderRadius = '10px';
-  houseBg.style.marginTop = '15px';
-  
-  wrap.appendChild(houseBg);
+  // --- ТУТ БУЛО ЗОБРАЖЕННЯ houseBg, ТЕПЕР ВОНО ВИДАЛЕНЕ ---
+
   questEl.appendChild(wrap);
 
   if(btnRestart) {
