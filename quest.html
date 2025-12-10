@@ -1,34 +1,22 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Обери свій факультет!</title>
-  <link href="https://fonts.cdnfonts.com/css/harry-potter" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/styles.css">
-  <link rel="stylesheet" href="assets/css/games.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Пригода починається</title>
+    <link href="https://fonts.cdnfonts.com/css/harry-potter" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/styles.css">
 </head>
 <body>
-  <div id="page-bg"></div>
+    <div id="page-bg" aria-hidden="true"></div>
 
-  <main class="wrap">
-    <header class="header">
-      <h1 id="page-title">Завантаження...</h1>
-      <p id="page-sub" class="muted">Зачекайте магію</p>
-    </header>
+    <main class="quest-wrap" id="quest">
+        </main>
+    
+    <button id="btn-back" class="btn-back" style="display:none;">Назад</button>
 
-    <section id="stage" class="stage">
-      <div id="quest" class="quest-box">
-        <div class="loader"></div>
-      </div>
-    </section>
+    <div class="progress-bar"><i style="width: 0%"></i></div>
 
-    <div class="floating-controls">
-      <button id="btn-back" disabled>Назад</button>
-      <button id="btn-restart" style="display:none">Наново</button>
-    </div>
-  </main>
-
-  <script src="assets/js/quest.js" type="module"></script>
+    <script type="module" src="assets/js/quest.js"></script>
 </body>
 </html>

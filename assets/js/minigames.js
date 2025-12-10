@@ -1,212 +1,306 @@
 // assets/js/minigames.js
 
-// --- ГРА 1: ПАЗЛ (Без змін у цьому запиті) ---
+// 1. ПАЗЛ (З ОБМЕЖЕННЯМ ВНИЗУ)
 export function startPuzzle(container, onComplete) {
-    const imageUrl = 'assets/img/castle.jpg';
+    container.innerHTML = '';
+    const h1 = document.createElement('h1'); h1.className = 'game-title'; h1.textContent = 'Віднови Замок';
+    const p = document.createElement('p'); p.className = 'game-instruction'; p.textContent = 'Збери пазл';
+    const imageSrc = 'assets/img/castle_full.jpg'; 
+    const refContainer = document.createElement('div'); refContainer.className = 'reference-container';
+    refContainer.innerHTML = `<img src="${imageSrc}" class="reference-img" alt="Зразок">`;
+    const board = document.createElement('div'); board.className = 'puzzle-board';
+    const guide = document.createElement('div'); guide.className = 'puzzle-guide';
+    board.appendChild(guide);
+    container.appendChild(h1); container.appendChild(p); container.appendChild(refContainer); container.appendChild(board);
 
-    const subEl = document.getElementById('page-sub');
-    if(subEl) subEl.textContent = "Перетягни шматочки на свої місця";
+    const rows = 3; const cols = 4; const pieceSize = 80; 
+    guide.style.width = `${cols * pieceSize}px`; guide.style.height = `${rows * pieceSize}px`;
+    let placedCount = 0; const totalPieces = rows * cols; const placedPositions = []; 
 
-    container.innerHTML = `
-        <div class="game-container">
-            <h2 class="game-title">Віднови Замок</h2>
-            <div class="puzzle-area" id="puzzle-area">
-                <div class="puzzle-board-guide" id="guide"></div>
-            </div>
-        </div>
-    `;
+    setTimeout(() => {
+        const boardRect = board.getBoundingClientRect();
+        const margin = 10; const bottomSafeMargin = 40; 
+        const minScreenX = margin; const maxScreenX = window.innerWidth - pieceSize - margin;
+        const minScreenY = margin; const maxScreenY = window.innerHeight - pieceSize - bottomSafeMargin; 
 
-    const area = document.getElementById('puzzle-area');
-    const guide = document.getElementById('guide');
-    
-    const boardW = 320; const boardH = 180; const cols = 4; const rows = 3;
-    const cellW = boardW / cols; const cellH = boardH / rows;
-    const tabHeight = Math.floor(Math.min(cellW, cellH) * 0.22);
-    const safePadding = Math.round(tabHeight * 1.5); 
-    const pieceW = cellW + (safePadding * 2); const pieceH = cellH + (safePadding * 2);
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                const piece = document.createElement('div'); piece.classList.add('puzzle-piece');
+                piece.style.backgroundImage = `url(${imageSrc})`;
+                piece.style.backgroundSize = `${cols * pieceSize}px ${rows * pieceSize}px`; 
+                piece.style.backgroundPosition = `-${c * pieceSize}px -${r * pieceSize}px`;
+                piece.dataset.targetX = c * pieceSize; piece.dataset.targetY = r * pieceSize;
+                const randomAngle = Math.random() * 20 - 10; piece.style.transform = `rotate(${randomAngle}deg)`;
 
-    const pieces = [];
-    let placedCount = 0;
-
-    const areaRect = area.getBoundingClientRect();
-    const isMobile = window.innerWidth <= 600;
-    const guideScale = isMobile ? 0.9 : 1.0; 
-
-    guide.style.width = `${boardW * guideScale}px`;
-    guide.style.height = `${boardH * guideScale}px`;
-
-    const guideRect = guide.getBoundingClientRect();
-    const guideLeft = guideRect.left - areaRect.left;
-    const guideTop = guideRect.top - areaRect.top;
-
-    const shapes = []; 
-    for(let r=0; r<rows; r++) { shapes[r] = []; for(let c=0; c<cols; c++) { shapes[r][c] = { top: 0, right: 0, bottom: 0, left: 0 }; } }
-    for(let r=0; r<rows; r++) { for(let c=0; c<cols; c++) { if(c < cols - 1) { const type = Math.random() > 0.5 ? 1 : -1; shapes[r][c].right = type; shapes[r][c+1].left = -type; } if(r < rows - 1) { const type = Math.random() > 0.5 ? 1 : -1; shapes[r][c].bottom = type; shapes[r+1][c].top = -type; } } }
-
-    for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-            const piece = document.createElement('div');
-            piece.className = 'puzzle-piece';
-            piece.style.width = `${pieceW}px`;
-            piece.style.height = `${pieceH}px`;
-            piece.style.backgroundImage = `url('${imageUrl}')`;
-            piece.style.backgroundRepeat = 'no-repeat';
-            piece.style.backgroundSize = `${boardW * guideScale}px ${boardH * guideScale}px`;
-            const bgX = Math.round((c * cellW * guideScale) - safePadding);
-            const bgY = Math.round((r * cellH * guideScale) - safePadding);
-            piece.style.backgroundPosition = `${-bgX}px ${-bgY}px`;
-            const shape = shapes[r][c];
-            const pathString = getRobustPuzzlePath(cellW * guideScale, cellH * guideScale, tabHeight, safePadding, shape.top, shape.right, shape.bottom, shape.left);
-            const pathCSS = `path('${pathString}')`;
-            piece.style.webkitClipPath = pathCSS;
-            piece.style.clipPath = pathCSS;
-            const destInGuideX = (c * cellW * guideScale) - safePadding;
-            const destInGuideY = (r * cellH * guideScale) - safePadding;
-            const correctX = guideLeft + destInGuideX;
-            const correctY = guideTop + destInGuideY;
-            piece.dataset.destX = correctX;
-            piece.dataset.destY = correctY;
-
-            const pieceRealW = pieceW;
-            const pieceRealH = pieceH;
-            const maxX = areaRect.width - pieceRealW;
-            const maxY = areaRect.height - pieceRealH;
-            const guideBottom = guideTop + (boardH * guideScale);
-            const startY = guideBottom + 10; 
-            let randX, randY;
-            if (isMobile) {
-                randX = Math.random() * maxX;
-                const availableH = maxY - startY;
-                if (availableH > 30) {
-                    randY = startY + Math.random() * availableH;
-                } else {
-                    randY = maxY - 5;
+                let attempts = 0; let validPosition = false; let randScreenX, randScreenY;
+                while (!validPosition && attempts < 50) {
+                    attempts++;
+                    randScreenX = minScreenX + Math.random() * (maxScreenX - minScreenX);
+                    randScreenY = minScreenY + Math.random() * (maxScreenY - minScreenY);
+                    const guideRect = guide.getBoundingClientRect();
+                    const isInsideGuide = (randScreenX < guideRect.right && randScreenX + pieceSize > guideRect.left && randScreenY < guideRect.bottom && randScreenY + pieceSize > guideRect.top);
+                    let overlaps = false;
+                    for (let pos of placedPositions) {
+                        const dist = Math.hypot(pos.x - randScreenX, pos.y - randScreenY);
+                        if (dist < pieceSize * 0.6) { overlaps = true; break; }
+                    }
+                    if (!isInsideGuide && !overlaps) { validPosition = true; placedPositions.push({x: randScreenX, y: randScreenY}); }
                 }
-            } else {
-                randX = Math.random() * maxX;
-                randY = Math.random() * maxY;
+                if (!validPosition) { randScreenX = minScreenX + Math.random() * (maxScreenX - minScreenX); randScreenY = minScreenY + Math.random() * (maxScreenY - minScreenY); }
+                const finalLeft = randScreenX - boardRect.left; const finalTop = randScreenY - boardRect.top;
+                piece.style.left = `${finalLeft}px`; piece.style.top = `${finalTop}px`;
+                makeDraggable(piece, guide, refContainer, onComplete, totalPieces);
+                board.appendChild(piece);
             }
-            if(randX < 0) randX = 0; if(randY < 0) randY = 0; if(randX > maxX) randX = maxX; if(randY > maxY) randY = maxY;
-            piece.style.left = `${randX}px`;
-            piece.style.top = `${randY}px`;
-            makeDraggable(piece, correctX, correctY, area);
-            area.appendChild(piece);
-            pieces.push(piece);
         }
-    }
+    }, 100);
 
-    function getRobustPuzzlePath(w, h, tab, padding, top, right, bottom, left) { const startX = padding; const startY = padding; const f = (val) => Number(val.toFixed(1)); let path = `M ${f(startX)} ${f(startY)}`; const neck = tab * 0.2; const head = tab * 1.0; if (top === 0) path += ` L ${f(startX + w)} ${f(startY)}`; else { const sign = -1 * top; const cx = startX + w / 2; const cy = startY; path += ` L ${f(cx - neck * 2)} ${f(cy)}`; path += ` C ${f(cx - neck * 2)} ${f(cy + sign * head)}, ${f(cx + neck * 2)} ${f(cy + sign * head)}, ${f(cx + neck * 2)} ${f(cy)}`; path += ` L ${f(startX + w)} ${f(startY)}`; } if (right === 0) path += ` L ${f(startX + w)} ${f(startY + h)}`; else { const sign = 1 * right; const cx = startX + w; const cy = startY + h / 2; path += ` L ${f(cx)} ${f(cy - neck * 2)}`; path += ` C ${f(cx + sign * head)} ${f(cy - neck * 2)}, ${f(cx + sign * head)} ${f(cy + neck * 2)}, ${f(cx)} ${f(cy + neck * 2)}`; path += ` L ${f(startX + w)} ${f(startY + h)}`; } if (bottom === 0) path += ` L ${f(startX)} ${f(startY + h)}`; else { const sign = 1 * bottom; const cx = startX + w / 2; const cy = startY + h; path += ` L ${f(cx + neck * 2)} ${f(cy)}`; path += ` C ${f(cx + neck * 2)} ${f(cy + sign * head)}, ${f(cx - neck * 2)} ${f(cy + sign * head)}, ${f(cx - neck * 2)} ${f(cy)}`; path += ` L ${f(startX)} ${f(startY + h)}`; } if (left === 0) path += ` L ${f(startX)} ${f(startY)}`; else { const sign = -1 * left; const cx = startX; const cy = startY + h / 2; path += ` L ${f(cx)} ${f(cy + neck * 2)}`; path += ` C ${f(cx + sign * head)} ${f(cy + neck * 2)}, ${f(cx + sign * head)} ${f(cy - neck * 2)}, ${f(cx)} ${f(cy - neck * 2)}`; path += ` L ${f(startX)} ${f(startY)}`; } path += " Z"; return path; }
-    function makeDraggable(el, destX, destY, boundariesEl) { let isDragging = false; let startX, startY, initialLeft, initialTop; const startHandler = (e) => { if (el.classList.contains('snapped')) return; isDragging = true; const clientX = e.touches ? e.touches[0].clientX : e.clientX; const clientY = e.touches ? e.touches[0].clientY : e.clientY; startX = clientX; startY = clientY; initialLeft = parseFloat(el.style.left); initialTop = parseFloat(el.style.top); el.style.zIndex = 1000; e.preventDefault(); }; const moveHandler = (e) => { if (!isDragging) return; const clientX = e.touches ? e.touches[0].clientX : e.clientX; const clientY = e.touches ? e.touches[0].clientY : e.clientY; const dx = clientX - startX; const dy = clientY - startY; let newLeft = initialLeft + dx; let newTop = initialTop + dy; const maxL = boundariesEl.clientWidth - el.offsetWidth; const maxT = boundariesEl.clientHeight - el.offsetHeight; if(newLeft < 0) newLeft = 0; if(newTop < 0) newTop = 0; if(newLeft > maxL) newLeft = maxL; if(newTop > maxT) newTop = maxT; el.style.left = `${newLeft}px`; el.style.top = `${newTop}px`; e.preventDefault(); }; const endHandler = () => { if (!isDragging) return; isDragging = false; const currentLeft = parseFloat(el.style.left); const currentTop = parseFloat(el.style.top); if (Math.abs(currentLeft - destX) < 40 && Math.abs(currentTop - destY) < 40) { el.style.left = `${destX}px`; el.style.top = `${destY}px`; el.classList.add('snapped'); playSnapSound(); placedCount++; if (placedCount === pieces.length) { setTimeout(() => showModal("Замок відновлено!", onComplete), 500); } } else { el.style.zIndex = 20; } }; el.addEventListener('mousedown', startHandler); el.addEventListener('touchstart', startHandler, {passive: false}); window.addEventListener('mousemove', moveHandler); window.addEventListener('touchmove', moveHandler, {passive: false}); window.addEventListener('mouseup', endHandler); window.addEventListener('touchend', endHandler); }
-    function playSnapSound() { try { const ctx = new (window.AudioContext || window.webkitAudioContext)(); const o = ctx.createOscillator(); const g = ctx.createGain(); o.frequency.value = 600; o.type = 'triangle'; g.gain.setValueAtTime(0.05, ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.1); o.connect(g); g.connect(ctx.destination); o.start(); o.stop(ctx.currentTime + 0.1); } catch(e){} }
+    function makeDraggable(el, guideEl, refEl, callback, maxPieces) {
+        let isDragging = false; let startX, startY, initialLeft, initialTop;
+        const start = (e) => {
+            if (el.classList.contains('snapped')) return;
+            isDragging = true;
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            startX = clientX; startY = clientY; initialLeft = el.offsetLeft; initialTop = el.offsetTop;
+            el.style.zIndex = 200; el.style.transform = `rotate(0deg) scale(1.1)`;
+        };
+        const move = (e) => {
+            if (!isDragging) return;
+            e.preventDefault();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            const dx = clientX - startX; const dy = clientY - startY;
+            let newLeft = initialLeft + dx; let newTop = initialTop + dy;
+            const boardRect = board.getBoundingClientRect();
+            const pieceHeight = el.offsetHeight || 80; const pieceWidth = el.offsetWidth || 80;
+            const safeMargin = 10; const bottomSafeMargin = 20;
+            const proposedGlobalX = boardRect.left + newLeft; const proposedGlobalY = boardRect.top + newTop;
+            if (proposedGlobalX < safeMargin) newLeft = safeMargin - boardRect.left;
+            if (proposedGlobalX + pieceWidth > window.innerWidth - safeMargin) newLeft = (window.innerWidth - safeMargin - pieceWidth) - boardRect.left;
+            if (proposedGlobalY < safeMargin) newTop = safeMargin - boardRect.top;
+            const maxGlobalY = window.innerHeight - pieceHeight - bottomSafeMargin;
+            if (proposedGlobalY > maxGlobalY) newTop = maxGlobalY - boardRect.top;
+            el.style.left = `${newLeft}px`; el.style.top = `${newTop}px`;
+            const pieceRect = el.getBoundingClientRect(); const refRect = refEl.getBoundingClientRect();
+            const isOverlapping = !(pieceRect.right < refRect.left || pieceRect.left > refRect.right || pieceRect.bottom < refRect.top || pieceRect.top > refRect.bottom);
+            if (isOverlapping) el.style.opacity = '0.4'; else el.style.opacity = '1';
+        };
+        const end = () => {
+            if (!isDragging) return;
+            isDragging = false; el.style.zIndex = 100; el.style.opacity = '1';
+            if (!el.classList.contains('snapped')) { const randomAngle = Math.random() * 10 - 5; el.style.transform = `rotate(${randomAngle}deg)`; }
+            const elRect = el.getBoundingClientRect(); const guideRect = guideEl.getBoundingClientRect();
+            const targetGlobalX = guideRect.left + parseFloat(el.dataset.targetX); const targetGlobalY = guideRect.top + parseFloat(el.dataset.targetY);
+            const dist = Math.hypot(elRect.left - targetGlobalX, elRect.top - targetGlobalY);
+            if (dist < 30) {
+                el.style.left = el.dataset.targetX + 'px'; el.style.top = el.dataset.targetY + 'px';
+                el.style.transform = 'rotate(0deg)'; guideEl.appendChild(el); el.classList.add('snapped');
+                placedCount++;
+                if (placedCount === maxPieces) { setTimeout(() => { if (callback) callback(); }, 500); }
+            }
+        };
+        el.addEventListener('mousedown', start); document.addEventListener('mousemove', move); document.addEventListener('mouseup', end);
+        el.addEventListener('touchstart', start, {passive: false}); document.addEventListener('touchmove', move, {passive: false}); document.addEventListener('touchend', end);
+    }
 }
 
-
-// --- ГРА 2: КУЛЯ (Без заголовка) ---
+// 2. КУЛЯ
 export function startOrb(container, winner, onComplete) {
-    const subEl = document.getElementById('page-sub');
-    if(subEl) subEl.textContent = ""; // Очистити текст
-
-    // В HTML прибрано h2, тільки куля і кнопка
     container.innerHTML = `
-        <div class="game-container">
-            <div class="orb-container">
-                <div class="glass-ball">
-                    <div class="smoke-layer smoke-1"></div>
-                    <div class="smoke-layer smoke-2"></div>
-                    <div class="smoke-layer smoke-3"></div>
-                    <div class="orb-glow-color" id="orb-color"></div>
-                </div>
-                <div class="orb-stand"></div>
+        <h2 class="game-title">Кімната Пророцтв</h2>
+        <p class="game-instruction">Тряси кулю або натисни кнопку</p>
+        <div class="orb-container">
+            <div class="glass-ball">
+                <div class="orb-glow-color" id="orb-color"></div>
             </div>
-            <button id="shake-action-btn" class="shake-btn">Дізнатись долю</button>
-            <button id="next-orb-btn" class="btn-primary" style="display:none; margin-top:20px;">Продовжити</button>
         </div>
+        <button id="shake-btn" class="btn-primary" style="margin-top:30px">Дізнатись долю</button>
     `;
-
     const colorLayer = document.getElementById('orb-color');
-    const actionBtn = document.getElementById('shake-action-btn');
-    const nextBtn = document.getElementById('next-orb-btn');
+    const btn = document.getElementById('shake-btn');
+    const colors = { A: '#740001', B: '#1a472a', C: '#ecb939', D: '#0e1a40' };
+    const targetColor = colors[winner] || '#fff';
+    colorLayer.style.setProperty('--smoke-color', targetColor);
+    btn.onclick = () => {
+        colorLayer.style.opacity = '1'; btn.style.display = 'none';
+        setTimeout(() => {
+            const nextBtn = document.createElement('button'); nextBtn.className = 'btn-primary';
+            nextBtn.textContent = 'Відкрити двері'; nextBtn.onclick = onComplete;
+            container.appendChild(nextBtn);
+        }, 3000); 
+    };
+}
 
-    const colorMap = { A: '#740001', B: '#1a472a', C: '#ecb939', D: '#0e1a40' };
-    const targetColor = colorMap[winner] || '#ffffff';
-    let activated = false;
+// 3. ЗАКЛЯТТЯ (З ВАЛІДАЦІЄЮ ТА СУЦІЛЬНИМ КОНТУРОМ)
+export function startSpell(container, onComplete) {
+    container.innerHTML = `
+        <h2 class="game-title">Відкрий Двері</h2>
+        <p class="game-instruction">Обведи контур магічного замку</p>
+        <div class="spell-area">
+            <canvas id="spell-canvas" width="300" height="350"></canvas>
+        </div>
+        <div id="spell-msg" style="height:20px; margin-top:10px; color: #ffd700; font-weight: bold; text-align:center;"></div>
+    `;
+    const canvas = document.getElementById('spell-canvas');
+    const ctx = canvas.getContext('2d');
+    let isDrawing = false;
+    let checkpoints = []; // Масив точок для перевірки
+    let passedCheckpoints = new Set(); // Точки, через які пройшов юзер
 
-    function activateOrb() {
-        if (activated) return;
-        activated = true;
-        colorLayer.style.setProperty('--orb-color', targetColor);
-        colorLayer.style.opacity = '0.9'; 
-        actionBtn.style.display = 'none';
-        try {
-            const ctx = new (window.AudioContext || window.webkitAudioContext)();
-            const o = ctx.createOscillator(); const g = ctx.createGain();
-            o.type = 'sine'; o.frequency.setValueAtTime(100, ctx.currentTime); o.frequency.linearRampToValueAtTime(400, ctx.currentTime + 3);
-            g.gain.setValueAtTime(0.0, ctx.currentTime); g.gain.linearRampToValueAtTime(0.2, ctx.currentTime + 1.5); g.gain.linearRampToValueAtTime(0.0, ctx.currentTime + 4);
-            o.connect(g); g.connect(ctx.destination); o.start(); o.stop(ctx.currentTime + 4);
-        } catch(e){}
-        setTimeout(() => { nextBtn.style.display = 'inline-block'; nextBtn.onclick = onComplete; }, 4000);
+    // ФУНКЦІЯ МАЛЮВАННЯ ШЛЯХУ (Keyhole Shape)
+    function drawKeyholePath(context) {
+        const cx = 150;
+        const cy = 130;
+        const radius = 50;
+        const bottomWidth = 100;
+        const bottomY = 280;
+
+        // Починаємо шлях
+        context.beginPath();
+        
+        // 1. Верхнє коло (Arc)
+        // Малюємо від кута ~135 градусів до ~45 градусів (за годинниковою)
+        // Щоб залишити низ відкритим для з'єднання з трикутником
+        const startAngle = Math.PI * 0.75; // 135 deg
+        const endAngle = Math.PI * 2.25;   // 405 deg (45 deg)
+        context.arc(cx, cy, radius, startAngle, endAngle);
+
+        // 2. Лінія вниз праворуч
+        context.lineTo(cx + bottomWidth / 2, bottomY);
+
+        // 3. Лінія вліво (дно)
+        context.lineTo(cx - bottomWidth / 2, bottomY);
+
+        // 4. Лінія вгору до початку кола
+        // Вираховуємо точку на колі, де ми почали
+        const startX = cx + radius * Math.cos(startAngle);
+        const startY = cy + radius * Math.sin(startAngle);
+        context.lineTo(startX, startY);
+
+        // НЕ замикаємо через closePath, щоб не було лінії посередині, але візуально воно замкнене
     }
 
-    actionBtn.onclick = () => {
-        activateOrb();
-        if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
-            DeviceMotionEvent.requestPermission().then(response => {
-                if (response == 'granted') window.addEventListener('devicemotion', handleMotion);
-            }).catch(e => console.log(e));
+    // ГЕНЕРАЦІЯ ЧЕКПОІНТІВ (Для перевірки)
+    function generateCheckpoints() {
+        checkpoints = [];
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = 300; tempCanvas.height = 350;
+        const tempCtx = tempCanvas.getContext('2d');
+        
+        drawKeyholePath(tempCtx);
+        
+        // Проходимось по шляху і ставимо точки (симуляція)
+        // Оскільки ми не можемо легко дістати точки з path, ми використаємо isPointInStroke
+        // Або простіше: математично додамо точки
+        
+        const cx = 150, cy = 130, r = 50;
+        // Точки на колі
+        for(let a = 0.75 * Math.PI; a <= 2.25 * Math.PI; a += 0.2) {
+            checkpoints.push({x: cx + r * Math.cos(a), y: cy + r * Math.sin(a)});
+        }
+        // Точки на лініях (спрощено)
+        // Права сторона
+        checkpoints.push({x: 185, y: 165}); checkpoints.push({x: 200, y: 280});
+        // Низ
+        checkpoints.push({x: 150, y: 280}); checkpoints.push({x: 100, y: 280});
+        // Ліва сторона
+        checkpoints.push({x: 115, y: 165});
+    }
+
+    function drawGuide() {
+        // Очищаємо канвас
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Стиль для контуру (пунктир)
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.lineWidth = 10;
+        ctx.setLineDash([15, 10]); // Пунктир (обрізаний контур)
+        ctx.lineJoin = 'round';
+        
+        drawKeyholePath(ctx);
+        ctx.stroke();
+        ctx.restore();
+    }
+    
+    // Ініціалізація
+    generateCheckpoints();
+    drawGuide();
+
+    // Налаштування малювання користувача
+    ctx.lineWidth = 8; 
+    ctx.strokeStyle = '#ffd700'; 
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = '#ffd700';
+    // Для користувача лінія суцільна
+    ctx.setLineDash([]); 
+
+    function getPos(e) {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return { x: clientX - rect.left, y: clientY - rect.top };
+    }
+
+    function checkProximity(x, y) {
+        // Радіус зарахування точки
+        const hitRadius = 20; 
+        checkpoints.forEach((pt, index) => {
+            const dist = Math.hypot(pt.x - x, pt.y - y);
+            if (dist < hitRadius) {
+                passedCheckpoints.add(index);
+            }
+        });
+    }
+
+    const start = (e) => { 
+        isDrawing = true; 
+        ctx.beginPath(); 
+        const p = getPos(e); 
+        ctx.moveTo(p.x, p.y);
+        checkProximity(p.x, p.y);
+    };
+    
+    const move = (e) => { 
+        if(!isDrawing) return; 
+        e.preventDefault(); 
+        const p = getPos(e); 
+        ctx.lineTo(p.x, p.y); 
+        ctx.stroke(); 
+        checkProximity(p.x, p.y);
+    };
+    
+    const end = () => { 
+        if (!isDrawing) return;
+        isDrawing = false; 
+
+        // ПЕРЕВІРКА РЕЗУЛЬТАТУ
+        const totalPoints = checkpoints.length;
+        const hitPoints = passedCheckpoints.size;
+        const percentage = hitPoints / totalPoints;
+        const msg = document.getElementById('spell-msg');
+
+        // Потрібно пройти хоча б 80% точок
+        if (percentage > 0.8) {
+            msg.textContent = "Двері відчиняються...";
+            msg.style.color = "#44ff44";
+            setTimeout(onComplete, 1500);
         } else {
-            window.addEventListener('devicemotion', handleMotion);
+            msg.textContent = "Закляття не вийшло. Спробуй ще!";
+            msg.style.color = "#ff4444";
+            
+            // Очищаємо і даємо спробувати знову через секунду
+            setTimeout(() => {
+                passedCheckpoints.clear();
+                msg.textContent = "";
+                drawGuide(); // Перемальовуємо контур
+            }, 1500);
         }
     };
 
-    function handleMotion(event) {
-        if (activated) return;
-        let total = 0;
-        if (event.accelerationIncludingGravity) {
-            const acc = event.accelerationIncludingGravity;
-            total = Math.abs(acc.x) + Math.abs(acc.y) + Math.abs(acc.z);
-        } 
-        if (total > 20) activateOrb();
-    }
-}
-
-// --- ГРА 3: ЗАМОК (Без заголовка) ---
-export function startSpell(container, onComplete) {
-    const subEl = document.getElementById('page-sub');
-    if(subEl) subEl.textContent = "";
-
-    // В HTML прибрано h2
-    container.innerHTML = `
-        <div class="game-container">
-            <div class="spell-area">
-                <svg class="spell-bg" viewBox="0 0 300 350">
-                    <path d="M150,50 A50,50 0 1,1 150,150 A50,50 0 1,1 150,50 M150,150 L100,300 L200,300 Z" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="6" stroke-dasharray="8,8"/>
-                </svg>
-                <canvas id="spell-canvas" width="300" height="350"></canvas>
-            </div>
-            <p id="spell-msg" style="height:20px; color:#ffcc00; margin-top:10px; font-weight:bold;"></p>
-        </div>
-    `;
-    const canvas = document.getElementById('spell-canvas'); const ctx = canvas.getContext('2d'); const msg = document.getElementById('spell-msg');
-    let isDrawing = false; let points = [];
-    ctx.lineWidth = 14; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#ffd700'; ctx.shadowBlur = 15; ctx.shadowColor = '#ffaa00';
-    function getPos(e) { const rect = canvas.getBoundingClientRect(); const cx = e.touches ? e.touches[0].clientX : e.clientX; const cy = e.touches ? e.touches[0].clientY : e.clientY; return { x: cx - rect.left, y: cy - rect.top }; }
-    function start(e) { isDrawing = true; points = []; ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.beginPath(); const p = getPos(e); ctx.moveTo(p.x, p.y); points.push(p); e.preventDefault(); }
-    function move(e) { if (!isDrawing) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); points.push(p); e.preventDefault(); }
-    function end() { if (!isDrawing) return; isDrawing = false; validateShape(); }
     canvas.addEventListener('mousedown', start); canvas.addEventListener('mousemove', move); canvas.addEventListener('mouseup', end);
     canvas.addEventListener('touchstart', start, {passive: false}); canvas.addEventListener('touchmove', move, {passive: false}); canvas.addEventListener('touchend', end);
-    function validateShape() { const checkpoints = [{x: 150, y: 50}, {x: 100, y: 100}, {x: 200, y: 100}, {x: 150, y: 150}, {x: 100, y: 300}, {x: 200, y: 300}]; let hits = 0; checkpoints.forEach(cp => { if(points.some(p => Math.hypot(p.x - cp.x, p.y - cp.y) < 45)) hits++; }); if (hits >= 5) { msg.textContent = "Закляття вірне!"; msg.style.color = "#44ff44"; setTimeout(() => showModal("Шлях відкрито!", onComplete), 500); } else { msg.textContent = "Спробуй ще раз!"; msg.style.color = "#ff4444"; setTimeout(() => { ctx.clearRect(0, 0, canvas.width, canvas.height); msg.textContent = ""; }, 1000); } }
-}
-
-function showModal(text, callback) {
-    const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
-    overlay.innerHTML = `
-        <div class="modal-content">
-            <h2 style="font-family: 'Lumos', serif; font-size: 32px; color: #c43b3b; margin-bottom: 20px; margin-top:0;">${text}</h2>
-            <button id="modal-ok" class="btn-primary" style="font-size: 18px; padding: 12px 30px;">Продовжити</button>
-        </div>
-    `;
-    document.body.appendChild(overlay);
-    document.getElementById('modal-ok').onclick = () => { document.body.removeChild(overlay); callback(); };
 }

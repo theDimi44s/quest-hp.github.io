@@ -4,22 +4,17 @@ import { startPuzzle, startOrb, startSpell } from './minigames.js';
 const questEl = document.getElementById('quest');
 const titleEl = document.getElementById('page-title');
 const subEl = document.getElementById('page-sub');
-const btnBack = document.getElementById('btn-back');
-const btnRestart = document.getElementById('btn-restart');
 const progressBar = document.querySelector('.progress > i');
 
 let questData = null;
 let keys = [];
-let historyStack = []; // Історія індексів питань
 let score = { A:0, B:0, C:0, D:0 };
 
 const audioFiles = {
-  A: 'assets/audio/gryffindor.mp3',
-  B: 'assets/audio/slytherin.mp3',
-  C: 'assets/audio/hufflepuff.mp3',
-  D: 'assets/audio/ravenclaw.mp3'
+  A: 'assets/audio/gryffindor.mp3', B: 'assets/audio/slytherin.mp3',
+  C: 'assets/audio/hufflepuff.mp3', D: 'assets/audio/ravenclaw.mp3'
 };
-
+const houses = { A: 'Грифіндор', B: 'Слизерин', C: 'Гафелпаф', D: 'Рейвенклов' };
 const houseBackgrounds = {
   A: 'https://images.unsplash.com/photo-1590422749830-49666c8f936e?auto=format&fit=crop&w=1400&q=80',
   B: 'https://images.unsplash.com/photo-1598153346810-860daa0d6cd6?auto=format&fit=crop&w=1400&q=80',
@@ -27,9 +22,6 @@ const houseBackgrounds = {
   D: 'https://images.unsplash.com/photo-1598153346810-860daa0d6cd6?auto=format&fit=crop&w=1400&q=80'
 };
 
-const houses = { A: 'Грифіндор', B: 'Слизерин', C: 'Гафелпаф', D: 'Рейвенклов' };
-
-// Функція перемішування (для відповідей)
 function shuffleArray(array) {
   for (let i = array.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -38,222 +30,223 @@ function shuffleArray(array) {
   return array;
 }
 
-function qsParam(name='id') {
-  return new URL(location.href).searchParams.get(name);
-}
-
+// === ЗАВАНТАЖЕННЯ ДАНИХ ===
 async function loadQuest(id){
   try {
-    const resp = await fetch(`quests/${id}.json`, {cache: 'no-store'});
-    if(!resp.ok) throw new Error(`Помилка: ${resp.status}`);
+    const resp = await fetch(`quests/${id}.json?v=${Math.random()}`);
+    if(!resp.ok) throw new Error(`Не вдалося завантажити квест (${resp.status})`);
     
     questData = await resp.json();
-
-    if(Array.isArray(questData.questions)) {
-      const obj = {};
-      questData.questions.forEach((q,i)=> obj['q'+i] = q);
-      questData.questions = obj;
-    }
-
-    keys = Object.keys(questData.questions || {});
-    resetState();
+    if(titleEl) titleEl.textContent = questData.title;
     
-    if(titleEl) titleEl.textContent = questData.title || 'Квест';
-    if(subEl) subEl.textContent = questData.subtitle || ' ';
-
-    let startIndex = keys.indexOf(questData.start ?? keys[0]);
-    if(startIndex < 0) startIndex = 0;
-    
-    renderQuestion(startIndex);
+    // Старт гри
+    startFirstTask(); 
 
   } catch (e) {
     console.error(e);
-    if(questEl) questEl.innerHTML = `<div style="padding:20px; text-align:center;">Помилка завантаження.</div>`;
+    if(questEl) questEl.innerHTML = `<div style="padding:20px; color: #ff4444;">Помилка: ${e.message}</div>`;
   }
 }
 
-function resetState(){
-  historyStack = [];
-  score = { A:0, B:0, C:0, D:0 };
-  window.historyValues = []; // Глобальний масив відповідей
-  if(btnBack) btnBack.disabled = true;
-  if(btnRestart) btnRestart.style.display = 'none';
-  if(progressBar) progressBar.style.width = '0%';
+// 1. ПАЗЛИ
+function startFirstTask() {
+    if(progressBar) progressBar.style.width = '10%';
+    
+    if (typeof startPuzzle !== 'function') {
+        alert("Помилка: startPuzzle не знайдено");
+        return;
+    }
+
+    startPuzzle(questEl, () => {
+        startQuiz();
+    });
+}
+
+// 2. ВІКТОРИНА
+function startQuiz() {
+    keys = Object.keys(questData.questions || {});
+    score = { A:0, B:0, C:0, D:0 };
+    if(subEl) subEl.textContent = "Дай чесні відповіді";
+    renderQuestion(0);
 }
 
 function renderQuestion(index){
-  if(!questEl || !questData) return;
-  
-  // Якщо питання закінчились — переходимо до ігор
-  if(index < 0 || index >= keys.length) { 
-      startMiniGames(); 
+  if(index >= keys.length) { 
+      showPermissionScreen(); 
       return; 
   }
 
-  // Логіка історії: додаємо поточний індекс в стек
-  historyStack.push(index);
-  
-  // Кнопка "Назад" активна, якщо ми пройшли більше 1 кроку
-  if(btnBack) btnBack.disabled = historyStack.length <= 1;
+  if(progressBar) progressBar.style.width = `${((index+1)/keys.length)*40 + 10}%`;
 
   const key = keys[index];
   const q = questData.questions[key];
 
   questEl.innerHTML = '';
-  const card = document.createElement('div');
-  card.className = 'q-card fade-in';
 
-  const qText = document.createElement('div');
+  // 1. Картка Питання
+  const card = document.createElement('div'); 
+  card.className = 'q-card fade-in';
+  
+  const qText = document.createElement('div'); 
   qText.className = 'q-text';
-  qText.textContent = q.text || '(питання)';
+  qText.textContent = q.text; 
   card.appendChild(qText);
 
-  const opts = document.createElement('div');
+  const opts = document.createElement('div'); 
   opts.className = 'options';
   
-  let shuffledOptions = [...(q.options || [])];
+  let shuffledOptions = [...q.options]; 
   shuffleArray(shuffledOptions);
 
   shuffledOptions.forEach((opt) => {
-    const b = document.createElement('button');
+    const b = document.createElement('button'); 
     b.className = 'opt-btn';
     b.textContent = opt.text;
-    b.onclick = () => handleChoice(opt.value);
+    b.onclick = () => {
+        if(score[opt.value] !== undefined) score[opt.value]++;
+        setTimeout(() => renderQuestion(index + 1), 200);
+    };
     opts.appendChild(b);
   });
   card.appendChild(opts);
+  
+  const counter = document.createElement('div');
+  counter.style.marginTop = '15px'; 
+  counter.style.fontSize = '14px'; 
+  counter.style.opacity = '0.5';
+  counter.textContent = `Питання ${index + 1} / ${keys.length}`;
+  card.appendChild(counter);
 
-  const prog = document.createElement('div');
-  prog.className = 'progress-row';
-  prog.innerHTML = `
-    <div style="font-size:14px; font-weight: bold; color:rgba(0,0,0,0.5)">Питання ${index+1} з ${keys.length}</div>
-    <div class="progress"><i style="width:${Math.round(((index)/keys.length)*100)}%"></i></div>`;
-  card.appendChild(prog);
+  // 2. Кнопки навігації (ВНИЗУ)
+  const navDiv = document.createElement('div');
+  navDiv.className = 'nav-controls';
+
+  const btnRestart = document.createElement('button');
+  btnRestart.className = 'nav-btn';
+  btnRestart.textContent = 'Почати спочатку';
+  btnRestart.onclick = () => location.reload();
+  
+  const btnBackNav = document.createElement('button');
+  btnBackNav.className = 'nav-btn';
+  btnBackNav.textContent = 'Назад';
+  btnBackNav.onclick = () => {
+      if (index === 0) {
+          window.location.href = 'index.html'; 
+      } else {
+          renderQuestion(index - 1);
+      }
+  };
+
+  navDiv.appendChild(btnRestart);
+  navDiv.appendChild(btnBackNav);
 
   questEl.appendChild(card);
+  questEl.appendChild(navDiv);
 }
 
-function handleChoice(value){
-  if(!window.historyValues) window.historyValues = [];
-  window.historyValues.push(value);
-  
-  if(value && score[value] !== undefined) score[value]++;
-
-  const currentCard = questEl.querySelector('.q-card');
-  if(currentCard){
-    currentCard.classList.remove('fade-in');
-    currentCard.classList.add('fade-out');
-  }
-
-  setTimeout(() => {
-     // Наступне питання = кількість вже даних відповідей
-     const nextIndex = window.historyValues.length;
-     renderQuestion(nextIndex);
-  }, 200);
-}
-
-// === ЛОГІКА КНОПКИ НАЗАД ===
-if(btnBack){
-    btnBack.addEventListener('click', () => {
-        if(historyStack.length <= 1) return; 
-
-        // 1. Видаляємо поточне питання зі стеку
-        historyStack.pop(); 
-        
-        // 2. Отримуємо індекс попереднього питання
-        const prevIndex = historyStack.pop(); 
-
-        // 3. Видаляємо останню відповідь
-        const lastVal = window.historyValues.pop();
-        if(lastVal && score[lastVal] > 0) score[lastVal]--;
-
-        // 4. Рендеримо попереднє питання
-        renderQuestion(prevIndex);
-    });
-}
-
-function startMiniGames() {
-    if(btnBack) btnBack.style.display = 'none';
-    if(progressBar) progressBar.style.width = '100%';
-
-    // Обчислюємо попереднього лідера для Кулі Пророцтв
-    const total = Object.values(score).reduce((s,v)=> s+v, 0) || 1;
-    const pct = {
-        A: score.A, B: score.B, C: score.C, D: score.D
+// ЕКРАН ДОЗВОЛУ (для Кулі)
+function showPermissionScreen() {
+    if(subEl) subEl.textContent = "Налаштування магії";
+    questEl.innerHTML = '';
+    
+    const card = document.createElement('div'); 
+    card.className = 'q-card fade-in';
+    card.style.textAlign = 'center';
+    
+    const h2 = document.createElement('h2'); 
+    h2.textContent = "Кімната Пророцтв"; 
+    h2.style.marginBottom = '20px';
+    
+    const p = document.createElement('p'); 
+    p.textContent = "Нам потрібно відчути твою магію.";
+    
+    const btn = document.createElement('button'); 
+    btn.className = 'btn-primary';
+    btn.textContent = "Увійти";
+    btn.style.marginTop = '20px';
+    
+    btn.onclick = () => {
+        // Запитуємо дозвіл на акселерометр (iOS) або просто йдемо далі
+        if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+            DeviceMotionEvent.requestPermission()
+                .then(response => startOrbTask())
+                .catch(e => startOrbTask());
+        } else {
+            startOrbTask();
+        }
     };
+    
+    card.appendChild(h2); 
+    card.appendChild(p); 
+    card.appendChild(btn);
+    questEl.appendChild(card);
+}
+
+// 3. КУЛЯ
+function startOrbTask() {
+    if(progressBar) progressBar.style.width = '70%';
+    
     let winner = 'A';
+    const pct = { A: score.A, B: score.B, C: score.C, D: score.D };
     if(pct.B > pct[winner]) winner = 'B';
     if(pct.C > pct[winner]) winner = 'C';
     if(pct.D > pct[winner]) winner = 'D';
 
-    // Старт ланцюжка ігор
-    startPuzzle(questEl, () => {
-        startOrb(questEl, winner, () => {
-            startSpell(questEl, () => {
-                renderResult();
-            });
-        });
+    startOrb(questEl, winner, () => {
+        startSpellTask(winner);
     });
 }
 
-function renderResult(){
-  if(btnBack) btnBack.style.display = 'none'; 
+// 4. ЗАКЛЯТТЯ
+function startSpellTask(winner) {
+    if(progressBar) progressBar.style.width = '90%';
+    startSpell(questEl, () => {
+        renderResult(winner);
+    });
+}
+
+// 5. РЕЗУЛЬТАТ
+function renderResult(winner){
+  if(progressBar) progressBar.style.width = '100%';
   if(subEl) subEl.textContent = "Розподіл завершено";
-
-  const total = Object.values(score).reduce((s,v)=> s+v, 0) || 1;
-  // (Відсотки можна використовувати для аналітики, тут просто визначаємо переможця)
-  const pct = {
-    A: Math.round((score.A / total)*100),
-    B: Math.round((score.B / total)*100),
-    C: Math.round((score.C / total)*100),
-    D: Math.round((score.D / total)*100)
-  };
-
-  let winner = 'A';
-  if(pct.B > pct[winner]) winner = 'B';
-  if(pct.C > pct[winner]) winner = 'C';
-  if(pct.D > pct[winner]) winner = 'D';
   
   questEl.innerHTML = '';
-  const wrap = document.createElement('div');
+  const wrap = document.createElement('div'); 
   wrap.className = 'result-wrap fade-in';
 
-  const logo = document.createElement('div');
-  logo.className = 'house-logo';
-  if(winner === 'A') { logo.classList.add('house-grif'); logo.textContent = 'G'; }
-  if(winner === 'B') { logo.classList.add('house-sly'); logo.textContent = 'S'; }
-  if(winner === 'C') { logo.classList.add('house-huf'); logo.textContent = 'H'; }
-  if(winner === 'D') { logo.classList.add('house-rav'); logo.textContent = 'R'; }
-
+  // ВАЖЛИВО: Прибрав блок .house-logo (літеру), як ти просив
+  
   const title = document.createElement('h2');
   title.textContent = `Ти — ${houses[winner]}!`;
-  title.style.margin = '10px 0';
+  title.style.margin = '20px 0'; 
+  title.style.fontSize = '36px';
   title.style.color = '#fff';
+  title.style.textShadow = '0 0 10px rgba(0,0,0,0.8)';
+  title.style.fontFamily = "var(--hp-font)"; 
 
-  const actions = document.createElement('div');
+  const actions = document.createElement('div'); 
   actions.className = 'action-row';
   
-  const playBtn = document.createElement('button');
+  const playBtn = document.createElement('button'); 
   playBtn.className = 'btn-primary';
-  playBtn.textContent = 'Прослухати ще раз';
+  playBtn.textContent = 'Гімн факультету';
   playBtn.onclick = () => playHouseAudio(winner);
   
+  const restartBtn = document.createElement('button');
+  restartBtn.className = 'btn-primary';
+  restartBtn.textContent = 'Пройти знову';
+  restartBtn.style.marginLeft = '10px';
+  restartBtn.onclick = () => location.reload();
+
   actions.appendChild(playBtn);
-  wrap.appendChild(logo);
-  wrap.appendChild(title);
+  actions.appendChild(restartBtn);
+  
+  wrap.appendChild(title); 
   wrap.appendChild(actions);
-
-  // --- ТУТ БУЛО ЗОБРАЖЕННЯ houseBg, ТЕПЕР ВОНО ВИДАЛЕНЕ ---
-
   questEl.appendChild(wrap);
 
-  if(btnRestart) {
-      btnRestart.style.display = 'inline-block';
-      btnRestart.onclick = () => {
-          location.reload(); 
-      };
-  }
-  
+  document.body.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('${houseBackgrounds[winner]}')`;
+
   playHouseAudio(winner);
 }
 
@@ -261,13 +254,12 @@ let houseAudio = new Audio();
 function playHouseAudio(code){
   const src = audioFiles[code];
   if(!src) return;
-  houseAudio.pause();
-  houseAudio = new Audio(src);
+  houseAudio.pause(); 
+  houseAudio = new Audio(src); 
   houseAudio.volume = 0.8;
-  houseAudio.play().catch(e => console.log("Audio autoplay block:", e));
+  houseAudio.play().catch(e=>{});
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    const id = qsParam('id') || '001';
-    loadQuest(id);
+    loadQuest('001');
 });
