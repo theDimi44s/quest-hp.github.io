@@ -2,7 +2,7 @@
 import { startPuzzle, startOrb, startSpell } from './minigames.js';
 
 const questEl = document.getElementById('quest');
-const titleEl = document.getElementById('page-title');
+const titleEl = document.getElementById('page-title'); 
 const subEl = document.getElementById('page-sub');
 const progressBar = document.querySelector('.progress > i');
 
@@ -39,7 +39,6 @@ async function loadQuest(id){
     questData = await resp.json();
     if(titleEl) titleEl.textContent = questData.title;
     
-    // Старт гри
     startFirstTask(); 
 
   } catch (e) {
@@ -51,12 +50,10 @@ async function loadQuest(id){
 // 1. ПАЗЛИ
 function startFirstTask() {
     if(progressBar) progressBar.style.width = '10%';
-    
     if (typeof startPuzzle !== 'function') {
         alert("Помилка: startPuzzle не знайдено");
         return;
     }
-
     startPuzzle(questEl, () => {
         startQuiz();
     });
@@ -100,7 +97,7 @@ function renderQuestion(index){
 
   shuffledOptions.forEach((opt) => {
     const b = document.createElement('button'); 
-    b.className = 'opt-btn';
+    b.className = 'opt-btn'; 
     b.textContent = opt.text;
     b.onclick = () => {
         if(score[opt.value] !== undefined) score[opt.value]++;
@@ -122,12 +119,12 @@ function renderQuestion(index){
   navDiv.className = 'nav-controls';
 
   const btnRestart = document.createElement('button');
-  btnRestart.className = 'nav-btn';
+  btnRestart.className = 'nav-btn'; 
   btnRestart.textContent = 'Почати спочатку';
   btnRestart.onclick = () => location.reload();
   
   const btnBackNav = document.createElement('button');
-  btnBackNav.className = 'nav-btn';
+  btnBackNav.className = 'nav-btn'; 
   btnBackNav.textContent = 'Назад';
   btnBackNav.onclick = () => {
       if (index === 0) {
@@ -166,7 +163,6 @@ function showPermissionScreen() {
     btn.style.marginTop = '20px';
     
     btn.onclick = () => {
-        // Запитуємо дозвіл на акселерометр (iOS) або просто йдемо далі
         if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
             DeviceMotionEvent.requestPermission()
                 .then(response => startOrbTask())
@@ -214,16 +210,13 @@ function renderResult(winner){
   const wrap = document.createElement('div'); 
   wrap.className = 'result-wrap fade-in';
 
-  // ВАЖЛИВО: Прибрав блок .house-logo (літеру), як ти просив
-  
   const title = document.createElement('h2');
   title.textContent = `Ти — ${houses[winner]}!`;
   title.style.margin = '20px 0'; 
-  title.style.fontSize = '36px';
+  title.style.fontSize = '42px';
   title.style.color = '#fff';
   title.style.textShadow = '0 0 10px rgba(0,0,0,0.8)';
-  title.style.fontFamily = "var(--hp-font)"; 
-
+  
   const actions = document.createElement('div'); 
   actions.className = 'action-row';
   
@@ -260,6 +253,62 @@ function playHouseAudio(code){
   houseAudio.play().catch(e=>{});
 }
 
+// ІНІЦІАЛІЗАЦІЯ
 document.addEventListener('DOMContentLoaded', () => {
+    
+    // 1. ВИБІР ФОНУ (1 або 2)
+    const bg = document.getElementById('page-bg');
+    if(bg) {
+        const randomNum = Math.random() > 0.5 ? '1' : '2';
+        bg.style.backgroundImage = `url('assets/img/castle-bg${randomNum}.jpg')`;
+    }
+
+    // 2. ГЕНЕРАЦІЯ МАГІЧНИХ СВІЧОК
+    const candleContainer = document.getElementById('magic-candles-container');
+    if (candleContainer) {
+        const candleImages = ['c1.png', 'c2.png', 'c3.png', 'c4.png'];
+        const totalCandles = 70; // Кількість свічок
+
+        for (let i = 0; i < totalCandles; i++) {
+            const img = document.createElement('img');
+            const randomImg = candleImages[Math.floor(Math.random() * candleImages.length)];
+            img.src = `assets/img/${randomImg}`;
+            img.classList.add('magic-candle'); 
+
+            // Розмір та глибина
+            const size = 2 + Math.random() * 5; // 
+            img.style.width = `${size}px`;
+            img.style.height = 'auto';
+
+            // Позиція
+            img.style.left = `${Math.random() * 100}%`;
+            img.style.top = `${Math.random() * 100}%`;
+
+            // Стилі глибини
+            if (size < 70) {
+                img.style.opacity = '0.3';
+                img.style.filter = 'blur(3px)';
+                img.style.zIndex = '0';
+            } else {
+                img.style.opacity = '0.9';
+                img.style.filter = 'blur(0px)';
+                img.style.zIndex = '2';
+            }
+
+            // Анімація
+            const duration = 3 + Math.random() * 10;
+            const delay = -(Math.random() * 10);
+            
+            img.style.animationName = 'floatAnimation';
+            img.style.animationDuration = `${duration}s`;
+            img.style.animationDelay = `${delay}s`;
+            img.style.animationIterationCount = 'infinite';
+            img.style.animationTimingFunction = 'ease-in-out';
+
+            candleContainer.appendChild(img);
+        }
+    }
+
+    // 3. ЗАПУСК ГРИ
     loadQuest('001');
 });

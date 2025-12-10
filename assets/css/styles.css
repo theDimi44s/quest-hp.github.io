@@ -22,37 +22,76 @@ html, body {
     width: 100%; height: 100%; margin: 0; padding: 0;
     overflow: hidden; 
     background-color: var(--bg-dark);
-    font-family: var(--sys-font);
+    font-family: var(--hp-font); /* Глобальний шрифт */
     color: var(--text-color);
     position: fixed; 
 }
 
+/* ФОН СТОРІНКИ (z-index: 0) */
 #page-bg{
-  position:fixed; inset:0; z-index:0;
-  background: radial-gradient(ellipse at top, rgba(0,0,0,0.55), rgba(0,0,0,0.8)),
-              url('https://images.unsplash.com/photo-1503264116251-35a269479413?auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
+  position: fixed; 
+  inset: 0; 
+  z-index: 0;
+  background-image: url('../img/castle-bg1.jpg'); 
+  background-position: center center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  box-shadow: inset 0 0 0 1000px rgba(0, 0, 0, 0.4);
+  transition: background-image 0.5s ease-in-out;
 }
 
-/* ========== ВІТАЛЬНА СТОРІНКА (ВИПРАВЛЕНО) ========== */
+/* ШАР ЗІ СВІЧКАМИ 
+
+/* Контейнер на весь екран */
+#magic-candles-container {
+    position: fixed;
+    inset: 0;
+    pointer-events: none; /* Щоб не заважали клікати */
+    z-index: 1; 
+    overflow: hidden;
+}
+
+/* Спільний стиль для кожної свічки */
+.magic-candle {
+    position: absolute;
+    bottom: -100px; /* Стартують нижче екрану, якщо хочемо щоб вилітали, або просто positioning */
+    opacity: 0.8;
+    will-change: transform, opacity;
+}
+
+/* Анімація плавання (вліво-вправо і трішки вгору-вниз) */
+@keyframes floatAnimation {
+    0% { transform: translate(0, 0) rotate(0deg); }
+    25% { transform: translate(10px, -15px) rotate(2deg); }
+    50% { transform: translate(-5px, -25px) rotate(-2deg); }
+    75% { transform: translate(-15px, -10px) rotate(1deg); }
+    100% { transform: translate(0, 0) rotate(0deg); }
+}
+
+/* ЗАГАЛЬНІ СТИЛІ КНОПОК */
+button {
+    font-family: var(--hp-font);
+    cursor: pointer; border: none; outline: none;
+}
+
+/* ========== ВІТАЛЬНА СТОРІНКА ========== */
 .welcome-wrap {
-  position: relative; z-index: 2;
-  display: flex; 
-  align-items: center; 
-  justify-content: center;
+  position: relative; 
+  z-index: 5; /* Підняли над свічками */
+  display: flex; align-items: center; justify-content: center;
   width: 100%; height: 100dvh; 
   padding: 20px; box-sizing: border-box;
 }
 
 .envelope {
-  width: 460px; max-width: 94vw; height: 320px;
-  position: relative; border-radius: 4px; /* Менш округлий конверт */
+  width: 460px; max-width: 94vw; height: 340px;
+  position: relative; border-radius: 3px; 
   background: linear-gradient(180deg, rgba(245,235,215,0.98), rgba(233,218,186,0.98));
   box-shadow: 0 18px 60px rgba(10,6,4,0.6);
   transition: transform 0.34s ease;
-  display: flex; justify-content: center; /* Центрування по горизонталі */
+  display: flex; justify-content: center; align-items: center;
 }
-.envelope.open .envelope-flap{ transform: rotateX(-120deg); }
-.envelope.open .envelope-content{ opacity:0; transform: translateY(-8px); }
 
 .envelope-flap {
   position: absolute; top: -6px; left: 0; width: 100%; height: 52%;
@@ -60,91 +99,79 @@ html, body {
   transform-origin: top center; transition: transform 0.9s ease; z-index: 3;
   border-bottom: 2px dashed rgba(170,140,100,0.4);
 }
+.envelope.open .envelope-flap{ transform: rotateX(-120deg); }
+.envelope.open .envelope-content{ opacity:0; transform: translateY(-8px); }
 
 .envelope-content {
   position: relative; z-index: 4; 
-  padding: 30px 20px; 
-  width: 100%;
-  height: 100%;
-  box-sizing: border-box;
-  text-align: center;
-  display: flex; 
-  flex-direction: column; 
-  align-items: center; /* Центрування по горизонталі */
-  justify-content: center; /* Центрування по вертикалі */
-  color: #3b2b1b;
+  padding: 30px; width: 100%; height: 100%; box-sizing: border-box;
+  text-align: center; display: flex; flex-direction: column; 
+  align-items: center; justify-content: center; color: #3b2b1b;
 }
 
 .welcome-title { 
-    font-family: var(--hp-font); 
-    font-size: 38px; 
-    margin: 20px 0px 0 0;
+  white-space: nowrap; /* Запобігає переносу тексту */
+    font-size: 35px; 
+    margin: 35px 0 0 0; 
     color: #6b2b2b; 
     line-height: 1.1; 
     text-align: center;
 }
+
 .welcome-text { 
-    font-size: 18px; 
+    font-size: 17px; 
     margin-bottom: 30px; 
-    text-align: center;
-    font-family: var(--hp-font);
+    text-align: center; 
+    line-height: 1.4;
 }
 
 #btn-open {
-  padding: 12px 40px; 
-  font-size: 20px; 
-  cursor: pointer; 
-  border: 2px solid #8B0000; 
-  border-radius: 4px; /* Квадратна кнопка */
-  background: #a91b1b; 
-  color: #fff; /* Білий текст краще читається */
-  font-weight: bold; font-family: var(--hp-font);
-  box-shadow: 0 4px 10px rgba(0,0,0,0.4);
-  text-transform: uppercase;
-  letter-spacing: 1px;
+  padding: 16px 40px; font-size: 17px; 
+  font-weight: bold;
+  border: 2px solid #8333af; 
+  border-radius: 2px; 
+  background: #8333af; 
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+  letter-spacing: 2px;
 }
 #btn-open:active { transform: scale(0.98); }
 
 /* ========== КВЕСТ ========== */
 .quest-wrap {
-    position: relative; z-index: 2;
+    position: relative; 
+    z-index: 5; /* Підняли над свічками */
     width: 100%; height: 100dvh;
     display: flex; flex-direction: column; 
-    justify-content: center; 
-    align-items: center;
-    padding: 10px;
-    box-sizing: border-box;
+    justify-content: center; align-items: center;
+    padding: 10px; box-sizing: border-box;
 }
 
 .game-title {
-    font-family: var(--hp-font); color: var(--accent); font-size: 2.2rem;
-    margin: 0 0 5px 0; text-shadow: 2px 2px 4px #000; letter-spacing: 2px; text-align: center;
+    color: var(--accent); font-size: 2.5rem;
+    margin: 0 0 10px 0; text-shadow: 2px 2px 4px #000; letter-spacing: 2px; text-align: center;
 }
 .game-instruction {
-    font-family: var(--hp-font);
-    font-size: 1.3rem; color: #dcdcdc; margin: 0 0 15px 0; text-align: center;
+    font-size: 1.4rem; color: #dcdcdc; margin: 0 0 20px 0; text-align: center;
 }
 
-/* --- ЗАВДАННЯ №1: ПАЗЛ (Paper Style) --- */
+/* ПАЗЛ */
 .reference-container {
     width: 90%; max-width: 380px;
     border: 4px solid #3e2723; border-radius: 2px;
     background-color: rgba(0, 0, 0, 0.5);
     padding: 5px; margin-bottom: 10px;
-    display: flex; justify-content: center;
-    flex-shrink: 0; z-index: 1; 
+    display: flex; justify-content: center; flex-shrink: 0; z-index: 1; 
 }
 .reference-img { width: 100%; height: auto; display: block; opacity: 0.8; }
 
 .puzzle-board {
     position: relative;
-    width: 90%; max-width: 380px;
-    height: 420px; 
+    width: 90%; max-width: 380px; height: 420px; 
     background-color: #2d1b15;
     border: 5px solid #1a100c; border-radius: 4px;
     box-shadow: inset 0 0 30px rgba(0,0,0,0.9);
-    overflow: visible; 
-    flex-shrink: 0;
+    overflow: visible; flex-shrink: 0;
     display: flex; justify-content: center; align-items: center;
     margin-bottom: 20px; z-index: 5;
 }
@@ -154,158 +181,87 @@ html, body {
     background-image: url('https://www.transparenttextures.com/patterns/wood-pattern.png');
     z-index: 6;
 }
-
-/* Стиль "Паперового шматочка" */
 .puzzle-piece {
-    position: absolute;
-    width: 80px; height: 80px;
-    
-    /* Біла рамка як у картки/фото */
-    border: 2px solid #f0e6d2; 
-    background-color: #222; /* Підкладка */
-    
-    /* Тінь для об'єму (папір лежить на столі) */
-    box-shadow: 2px 3px 6px rgba(0,0,0,0.6);
-    
-    /* Легкий сепія фільтр для старовини */
-    filter: sepia(0.3);
-    
-    cursor: grab; touch-action: none; 
-    transition: transform 0.1s, box-shadow 0.1s;
+    position: absolute; width: 80px; height: 80px;
+    border: 2px solid #f0e6d2; background-color: #222;
+    box-shadow: 2px 3px 6px rgba(0,0,0,0.6); filter: sepia(0.3);
+    cursor: grab; touch-action: none; transition: transform 0.1s, box-shadow 0.1s;
     z-index: 100; 
 }
 .puzzle-piece:active { 
-    cursor: grabbing; 
-    z-index: 200; 
-    transform: scale(1.05) rotate(2deg); /* Ефект підняття */
-    box-shadow: 5px 10px 20px rgba(0,0,0,0.8);
-    filter: sepia(0); /* Стає яскравішим */
+    cursor: grabbing; z-index: 200; 
+    transform: scale(1.05) rotate(2deg);
+    box-shadow: 5px 10px 20px rgba(0,0,0,0.8); filter: sepia(0);
 }
 .puzzle-piece.snapped { 
     border: none; box-shadow: none; filter: none;
-    z-index: 10; pointer-events: none; 
-    transition: top 0.2s ease, left 0.2s ease;
+    z-index: 10; pointer-events: none; transition: top 0.2s ease, left 0.2s ease;
 }
 
-/* --- ВІКТОРИНА --- */
+/* ВІКТОРИНА */
 .q-card { 
     width: 90%; max-width: 500px; 
-    background: #f5f5f5; 
-    border-radius: 4px; /* Більш квадратна */
-    padding: 25px; 
-    color: #2b1f15; 
+    background: #f5f5f5; border-radius: 4px; padding: 25px; color: #2b1f15; 
     animation: popIn 0.5s ease;
-    font-family: var(--hp-font);
-    text-align: center;
-    display: flex; flex-direction: column; align-items: center;
+    text-align: center; display: flex; flex-direction: column; align-items: center;
     box-shadow: 0 10px 30px rgba(0,0,0,0.7);
 }
 @keyframes popIn { from {opacity:0; transform:scale(0.9);} to {opacity:1; transform:scale(1);} }
 
-.q-text { font-size: 26px; margin-bottom: 20px; line-height: 1.3; }
-
+.q-text { font-size: 28px; margin-bottom: 20px; line-height: 1.3; }
 .options { display: flex; flex-direction: column; gap: 12px; width: 100%; }
 
 .opt-btn { 
-    background: #5d4426; color: #fff; 
-    padding: 14px; border-radius: 4px; border: 1px solid #3e2b16;
-    font-size: 18px; font-family: var(--hp-font); 
-    cursor: pointer; transition: background 0.2s; width: 100%; 
+    background: #5d4426; color: #fff; padding: 14px; 
+    border-radius: 4px; border: 1px solid #3e2b16;
+    font-size: 20px; transition: background 0.2s; width: 100%; 
 }
 .opt-btn:active { transform: scale(0.98); }
 .opt-btn:hover { background: #7a5e3d; }
 
-/* КНОПКИ ВНИЗУ */
+/* NAV-BAR */
 .nav-controls {
     display: flex; justify-content: center; gap: 20px; 
-    margin-top: 25px; 
-    width: 100%; max-width: 500px; z-index: 10;
+    margin-top: 25px; width: 100%; max-width: 500px; z-index: 10;
 }
 .nav-btn {
-    background: rgba(20, 20, 20, 0.8); 
-    color: #ddd;
-    border: 1px solid #666;
-    padding: 14px 12px 10px 12px;
-    border-radius: 4px; 
-    cursor: pointer;
-    
-    /* БУЛО: font-family: var(--sys-font); */
-    /* СТАЛО: */
-    font-family: var(--hp-font); 
-    
-    font-size: 16px; 
-    /* Можна прибрати font-weight: bold, бо шрифт Lumos і так жирний */
-    font-weight: normal; 
-    text-transform: uppercase;
-    transition: all 0.2s; 
-    backdrop-filter: blur(4px);
-    letter-spacing: 1px; /* Трохи розрядити літери для краси */
+    background: rgba(20, 20, 20, 0.85); color: #ddd;
+    border: 1px solid #777; padding: 12px 30px; border-radius: 4px; 
+    font-size: 18px; text-transform: uppercase; letter-spacing: 1px;
+    backdrop-filter: blur(4px); transition: all 0.2s;
 }
-.nav-btn:hover { background: rgba(50, 50, 50, 0.9); color: #fff; border-color: #fff; }
+.nav-btn:hover { background: rgba(50, 50, 50, 0.95); color: #fff; border-color: #fff; }
 
-/* --- ЗАВДАННЯ №2: КУЛЯ (Smoke Effect) --- */
+/* КУЛЯ */
 .orb-container { margin-top: 20px; display: flex; flex-direction: column; align-items: center; }
 .glass-ball { 
-    width: 240px; height: 240px; 
-    border-radius: 50%; 
-    position: relative; 
+    width: 240px; height: 240px; border-radius: 50%; position: relative; 
     background: radial-gradient(circle at 35% 35%, rgba(255,255,255,0.1), rgba(0,0,0,0.95)); 
-    box-shadow: 0 0 30px rgba(0,0,0,0.5), inset 0 0 20px rgba(255,255,255,0.1);
-    overflow: hidden; 
+    box-shadow: 0 0 30px rgba(0,0,0,0.5), inset 0 0 20px rgba(255,255,255,0.1); overflow: hidden; 
 }
-
-/* Ефект диму */
 .orb-glow-color { 
-    position: absolute; inset: -50%; /* Робимо більшим за кулю */
-    opacity: 0; 
-    transition: opacity 2s ease;
-    
-    /* Складний градієнт для імітації диму */
-    background: conic-gradient(
-        from 0deg, 
-        transparent 0%, 
-        var(--smoke-color, #fff) 20%, 
-        transparent 40%, 
-        var(--smoke-color, #fff) 60%, 
-        transparent 80%, 
-        var(--smoke-color, #fff) 100%
-    );
-    filter: blur(30px); /* Сильне розмиття перетворює градієнт на дим */
-    
-    animation: smokeSpin 4s linear infinite;
-    mix-blend-mode: hard-light;
+    position: absolute; inset: -50%; opacity: 0; transition: opacity 2s ease;
+    background: conic-gradient(from 0deg, transparent 0%, var(--smoke-color, #fff) 20%, transparent 40%, var(--smoke-color, #fff) 60%, transparent 80%, var(--smoke-color, #fff) 100%);
+    filter: blur(30px); animation: smokeSpin 4s linear infinite; mix-blend-mode: hard-light;
 }
-
 @keyframes smokeSpin {
-    0% { transform: rotate(0deg) scale(1); }
-    50% { transform: rotate(180deg) scale(1.2); }
-    100% { transform: rotate(360deg) scale(1); }
+    0% { transform: rotate(0deg) scale(1); } 50% { transform: rotate(180deg) scale(1.2); } 100% { transform: rotate(360deg) scale(1); }
 }
 
 .btn-primary { 
-    margin-top: 20px; padding: 12px 30px; 
-    background: var(--accent); color: #fff; 
-    border: none; border-radius: 4px; 
-    font-size: 18px; font-family: var(--hp-font); 
+    margin-top: 20px; padding: 12px 30px; background: var(--accent); color: #fff; 
+    border: none; border-radius: 4px; font-size: 20px; 
     box-shadow: 0 4px 10px rgba(0,0,0,0.5);
 }
 
-/* --- ЗАВДАННЯ №3: ЗАКЛЯТТЯ --- */
+/* ЗАКЛЯТТЯ */
 .spell-area { 
-    width: 300px; height: 350px; 
-    background: rgba(0,0,0,0.4); 
-    border: 2px solid rgba(255,255,255,0.2); 
-    border-radius: 10px; touch-action: none; 
-    position: relative;
+    width: 300px; height: 350px; background: rgba(0,0,0,0.4); 
+    border: 2px solid rgba(255,255,255,0.2); border-radius: 10px; touch-action: none; position: relative;
 }
 canvas { position: relative; z-index: 10; }
-
 .progress-bar { position: fixed; bottom: 0; left: 0; width: 100%; height: 6px; background: #111; z-index: 1000; }
 .progress-bar i { display: block; height: 100%; background: var(--accent); transition: width 0.3s; box-shadow: 0 0 10px var(--accent); }
 
-/* Приховуємо стару кнопку назад */
-.btn-back { display: none !important; } 
-
-/* Стилі для результату */
-.result-wrap { text-align: center; color: #fff; }
-.house-logo { display: none; } /* ПРИХОВУЄМО ЛІТЕРУ З РЕЗУЛЬТАТУ */
+.result-wrap { text-align: center; color: #fff; width: 100%; }
+.house-logo { display: none; }

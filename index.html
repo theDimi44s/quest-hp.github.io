@@ -9,6 +9,8 @@
 </head>
 <body>
   <div id="page-bg" aria-hidden="true"></div>
+  
+<div id="magic-candles-container"></div>
 
   <main class="welcome-wrap" role="main">
     <div class="envelope" id="envelope">
@@ -27,5 +29,15 @@
   </main>
 
   <script src="assets/js/welcome.js" type="module"></script>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const bg = document.getElementById('page-bg');
+      if(bg) {
+        const randomNum = Math.random() > 0.5 ? '1' : '2';
+        bg.style.backgroundImage = `url('assets/img/castle-bg${randomNum}.jpg')`;
+      }
+    });
+  </script>
 </body>
 </html>

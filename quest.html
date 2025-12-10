@@ -10,13 +10,24 @@
 <body>
     <div id="page-bg" aria-hidden="true"></div>
 
+    <div id="candle-overlay-2"></div>
+    <div id="candle-overlay"></div>
+
     <main class="quest-wrap" id="quest">
         </main>
     
-    <button id="btn-back" class="btn-back" style="display:none;">Назад</button>
-
     <div class="progress-bar"><i style="width: 0%"></i></div>
 
     <script type="module" src="assets/js/quest.js"></script>
+    
+    <script>
+       document.addEventListener('DOMContentLoaded', () => {
+         const bg = document.getElementById('page-bg');
+         if(bg) {
+           const randomNum = Math.random() > 0.5 ? '1' : '2';
+           bg.style.backgroundImage = `url('assets/img/castle-bg${randomNum}.jpg')`;
+         }
+       });
+    </script>
 </body>
 </html>
