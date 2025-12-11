@@ -3,7 +3,36 @@
 // 1. ПАЗЛ (З ОБМЕЖЕННЯМ ВНИЗУ)
 export function startPuzzle(container, onComplete) {
     container.innerHTML = '';
+
+// --- ПОЧАТОК: НЕВИДИМА КНОПКА ДЛЯ ТЕСТІВ (ЛІВИЙ ВЕРХНІЙ КУТ) ---
+    const cheatBtn = document.createElement('div');
+    cheatBtn.style.position = 'fixed'; // Фіксована, щоб була завжди в кутку екрану
+    cheatBtn.style.top = '0';
+    cheatBtn.style.left = '0';
+    cheatBtn.style.width = '10px';  // 30px легше натиснути, ніж 5px
+    cheatBtn.style.height = '10px';
+    cheatBtn.style.zIndex = '10000'; // Найвищий пріоритет (поверх пазлів і меню)
+    cheatBtn.style.cursor = 'default'; // Курсор не змінюється, щоб не "спалити" кнопку
+    // cheatBtn.style.background = 'red'; // Розкоментуй, якщо хочеш бачити кнопку під час тестів
+    
+    cheatBtn.onclick = (e) => {
+        e.stopPropagation(); // Щоб клік не спрацював на елементи під низом
+        console.log("DEV: Рівень пропущено через приховану кнопку");
+        if (onComplete) onComplete();
+    };
+    container.appendChild(cheatBtn);
+// --- КІНЕЦЬ: НЕВИДИМА КНОПКА ---
+
     const h1 = document.createElement('h1'); h1.className = 'game-title'; h1.textContent = 'Віднови Замок';
+
+    /* Додано можливість пропустити (для тестів) по натисканню на заголовок
+
+    h1.style.cursor = 'pointer'; h1.title = "Клікни, щоб пропустити (Тільки для тестів)"; h1.onclick = () => {
+        console.log("DEBUG: Пазл пропущено");
+        if(onComplete) onComplete();
+    };
+
+*/
     const p = document.createElement('p'); p.className = 'game-instruction'; p.textContent = 'Збери пазл';
     const imageSrc = 'assets/img/castle_full.jpg'; 
     const refContainer = document.createElement('div'); refContainer.className = 'reference-container';
@@ -108,8 +137,8 @@ export function startPuzzle(container, onComplete) {
 // 2. КУЛЯ
 export function startOrb(container, winner, onComplete) {
     container.innerHTML = `
-        <h2 class="game-title">Кімната Пророцтв</h2>
-        <p class="game-instruction">Тряси кулю або натисни кнопку</p>
+        <h2 class="game-title">Зал Пророцтв</h2>
+        <p class="game-instruction">Відчуй магію!</p>
         <div class="orb-container">
             <div class="glass-ball">
                 <div class="orb-glow-color" id="orb-color"></div>
@@ -119,6 +148,17 @@ export function startOrb(container, winner, onComplete) {
     `;
     const colorLayer = document.getElementById('orb-color');
     const btn = document.getElementById('shake-btn');
+// Додано можливість пропустити (для тестів)
+/*
+    const title = container.querySelector('.game-title');
+    if(title) {
+        title.onclick = () => {
+            console.log("DEBUG: Кулю пропущено");
+            if(onComplete) onComplete();
+        };
+    }
+*/
+
     const colors = { A: '#740001', B: '#1a472a', C: '#ecb939', D: '#0e1a40' };
     const targetColor = colors[winner] || '#fff';
     colorLayer.style.setProperty('--smoke-color', targetColor);
@@ -136,12 +176,19 @@ export function startOrb(container, winner, onComplete) {
 export function startSpell(container, onComplete) {
     container.innerHTML = `
         <h2 class="game-title">Відкрий Двері</h2>
+
         <p class="game-instruction">Обведи контур магічного замку</p>
         <div class="spell-area">
             <canvas id="spell-canvas" width="300" height="350"></canvas>
         </div>
         <div id="spell-msg" style="height:20px; margin-top:10px; color: #ffd700; font-weight: bold; text-align:center;"></div>
     `;
+// Додано можливість пропустити (для тестів)
+    const title = container.querySelector('.game-title');
+    title.onclick = () => {
+         console.log("DEBUG: Закляття пропущено");
+         if(onComplete) onComplete();
+    };
     const canvas = document.getElementById('spell-canvas');
     const ctx = canvas.getContext('2d');
     let isDrawing = false;

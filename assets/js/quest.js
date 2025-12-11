@@ -111,6 +111,7 @@ function renderQuestion(index){
   counter.style.marginTop = '15px'; 
   counter.style.fontSize = '14px'; 
   counter.style.opacity = '0.5';
+  counter.style.fontWeight = '700';
   counter.textContent = `Питання ${index + 1} / ${keys.length}`;
   card.appendChild(counter);
 
@@ -149,13 +150,15 @@ function showPermissionScreen() {
     const card = document.createElement('div'); 
     card.className = 'q-card fade-in';
     card.style.textAlign = 'center';
-    
+// Заголовок "Зал Пророцтв" 
     const h2 = document.createElement('h2'); 
-    h2.textContent = "Кімната Пророцтв"; 
+    h2.textContent = "Зал Пророцтв"; 
     h2.style.marginBottom = '20px';
     
-    const p = document.createElement('p'); 
-    p.textContent = "Нам потрібно відчути твою магію.";
+        const p = document.createElement('p'); 
+        p.textContent = `Зал Пророцтв — одна з восьми відомих кімнат Відділу Таємниць, розташована у підземних рівнях Міністерства магії. Саме тут, серед нескінченних стелажів, що зникають у висоті темного склепіння, зберігаються записи всіх пророцтв — здійснених і ще не здійснених.
+    
+    У вічному напівмороку мерехтять безліч скляних кульок. Погаслі й холодні — це ті, що вже збулися. Теплі та світні — ті, що ще очікують свого часу. Взяти пророчий шар може лише той, про кого саме йдеться у пророцтві. Під кожною кулькою закріплена табличка з іменем провидця та того, кому адресовано передбачення.`;
     
     const btn = document.createElement('button'); 
     btn.className = 'btn-primary';
@@ -211,9 +214,9 @@ function renderResult(winner){
   wrap.className = 'result-wrap fade-in';
 
   const title = document.createElement('h2');
-  title.textContent = `Ти — ${houses[winner]}!`;
+  title.textContent = `Вітаємо на факультеті — ${houses[winner]}!`;
   title.style.margin = '20px 0'; 
-  title.style.fontSize = '42px';
+  title.style.fontSize = '29px';
   title.style.color = '#fff';
   title.style.textShadow = '0 0 10px rgba(0,0,0,0.8)';
   
@@ -222,7 +225,7 @@ function renderResult(winner){
   
   const playBtn = document.createElement('button'); 
   playBtn.className = 'btn-primary';
-  playBtn.textContent = 'Гімн факультету';
+  playBtn.textContent = 'Прослухати ще раз';
   playBtn.onclick = () => playHouseAudio(winner);
   
   const restartBtn = document.createElement('button');
