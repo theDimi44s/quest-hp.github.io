@@ -1,40 +1,33 @@
 // assets/js/minigames.js
 
-// 1. ПАЗЛ (З ОБМЕЖЕННЯМ ВНИЗУ)
+// 1. ПАЗЛ (Без змін, тільки коментарі)
 export function startPuzzle(container, onComplete) {
     container.innerHTML = '';
 
-// --- ПОЧАТОК: НЕВИДИМА КНОПКА ДЛЯ ТЕСТІВ (ЛІВИЙ ВЕРХНІЙ КУТ) ---
+    // --- НЕВИДИМА КНОПКА ДЛЯ ТЕСТІВ (ЛІВИЙ ВЕРХНІЙ КУТ) ---
     const cheatBtn = document.createElement('div');
-    cheatBtn.style.position = 'fixed'; // Фіксована, щоб була завжди в кутку екрану
-    cheatBtn.style.top = '0';
-    cheatBtn.style.left = '0';
-    cheatBtn.style.width = '10px';  // 30px легше натиснути, ніж 5px
-    cheatBtn.style.height = '10px';
-    cheatBtn.style.zIndex = '10000'; // Найвищий пріоритет (поверх пазлів і меню)
-    cheatBtn.style.cursor = 'default'; // Курсор не змінюється, щоб не "спалити" кнопку
-    // cheatBtn.style.background = 'red'; // Розкоментуй, якщо хочеш бачити кнопку під час тестів
+    cheatBtn.style.position = 'fixed'; 
+    cheatBtn.style.top = '0'; cheatBtn.style.left = '0';
+    cheatBtn.style.width = '10px'; cheatBtn.style.height = '10px';
+    cheatBtn.style.zIndex = '10000'; cheatBtn.style.cursor = 'default';
     
     cheatBtn.onclick = (e) => {
-        e.stopPropagation(); // Щоб клік не спрацював на елементи під низом
+        e.stopPropagation(); 
         console.log("DEV: Рівень пропущено через приховану кнопку");
         if (onComplete) onComplete();
     };
     container.appendChild(cheatBtn);
-// --- КІНЕЦЬ: НЕВИДИМА КНОПКА ---
+    // -----------------------------------------------------
 
     const h1 = document.createElement('h1'); h1.className = 'game-title'; h1.textContent = 'Віднови Замок';
-
-    /* Додано можливість пропустити (для тестів) по натисканню на заголовок
-
-    h1.style.cursor = 'pointer'; h1.title = "Клікни, щоб пропустити (Тільки для тестів)"; h1.onclick = () => {
-        console.log("DEBUG: Пазл пропущено");
-        if(onComplete) onComplete();
-    };
-
-*/
     const p = document.createElement('p'); p.className = 'game-instruction'; p.textContent = 'Збери пазл';
-    const imageSrc = 'assets/img/castle_full.jpg'; 
+ 
+    // === РАНДОМНИЙ ВИБІР ЗОБРАЖЕННЯ ===
+    const puzzleOptions = ['assets/img/hippo.png', 'assets/img/library.png'];
+    // Вибираємо випадкове зображення
+    const imageSrc = puzzleOptions[Math.floor(Math.random() * puzzleOptions.length)];
+    // ===================================
+
     const refContainer = document.createElement('div'); refContainer.className = 'reference-container';
     refContainer.innerHTML = `<img src="${imageSrc}" class="reference-img" alt="Зразок">`;
     const board = document.createElement('div'); board.className = 'puzzle-board';
@@ -134,56 +127,138 @@ export function startPuzzle(container, onComplete) {
     }
 }
 
-// 2. КУЛЯ
+// 2. КУЛЯ (ОНОВЛЕНО: Тряска + Клік)
 export function startOrb(container, winner, onComplete) {
+    // 1. Створення HTML
     container.innerHTML = `
         <h2 class="game-title">Зал Пророцтв</h2>
-        <p class="game-instruction">Відчуй магію!</p>
+        <p class="game-instruction" id="orb-instruction">Потруси телефон, щоб розвіяти дим!</p>
         <div class="orb-container">
-            <div class="glass-ball">
+            <div class="glass-ball" id="magic-ball">
                 <div class="orb-glow-color" id="orb-color"></div>
             </div>
         </div>
-        <button id="shake-btn" class="btn-primary" style="margin-top:30px">Дізнатись долю</button>
+        <div id="manual-shake-hint" style="margin-top:20px; opacity:0; transition:opacity 1s; color: #aaa; font-size:14px;">
+           Магія не спрацьовує? <br>
+           <button class="btn-primary" id="manual-btn" style="margin-top:10px; font-size:16px;">Натиснути на кулю</button>
+        </div>
     `;
-    const colorLayer = document.getElementById('orb-color');
-    const btn = document.getElementById('shake-btn');
-// Додано можливість пропустити (для тестів)
-/*
+
+    // --- НЕВИДИМА КНОПКА ДЛЯ ПРОПУСКУ ---
     const title = container.querySelector('.game-title');
     if(title) {
         title.onclick = () => {
             console.log("DEBUG: Кулю пропущено");
+            cleanup();
             if(onComplete) onComplete();
         };
     }
-*/
+
+    const colorLayer = document.getElementById('orb-color');
+    const instruction = document.getElementById('orb-instruction');
+    const ball = document.getElementById('magic-ball');
+    const hintDiv = document.getElementById('manual-shake-hint');
+    const manualBtn = document.getElementById('manual-btn');
 
     const colors = { A: '#740001', B: '#1a472a', C: '#ecb939', D: '#0e1a40' };
     const targetColor = colors[winner] || '#fff';
     colorLayer.style.setProperty('--smoke-color', targetColor);
-    btn.onclick = () => {
-        colorLayer.style.opacity = '1'; btn.style.display = 'none';
+
+    let shakeThreshold = 15; // Чутливість тряски (чим менше число, тим легше)
+    let lastX = null, lastY = null, lastZ = null;
+    let isCompleted = false;
+
+    // --- ФУНКЦІЯ ЗАВЕРШЕННЯ (УСПІХ) ---
+    function triggerSuccess() {
+        if(isCompleted) return;
+        isCompleted = true;
+
+        // Вібрація (якщо підтримується)
+        if(navigator.vibrate) navigator.vibrate(200);
+
+        // Візуал
+        colorLayer.style.opacity = '1'; 
+        instruction.textContent = "Доля визначена...";
+        hintDiv.style.display = 'none';
+
+        cleanup(); // Прибираємо слухачі
+
+        // Чекаємо 3 секунди і йдемо далі
         setTimeout(() => {
-            const nextBtn = document.createElement('button'); nextBtn.className = 'btn-primary';
-            nextBtn.textContent = 'Відкрити двері'; nextBtn.onclick = onComplete;
-            container.appendChild(nextBtn);
-        }, 3000); 
+            if(onComplete) onComplete();
+        }, 3000);
+    }
+
+    // --- ОБРОБНИК РУХУ (ТРЯСКИ) ---
+    function handleMotion(event) {
+        if(isCompleted) return;
+
+        // Отримуємо прискорення (з гравітацією для кращої сумісності)
+        const acc = event.accelerationIncludingGravity;
+        if (!acc) return;
+
+        // Візуальний ефект: рухаємо кулю відповідно до нахилу телефону
+        const tiltX = acc.x || 0;
+        const tiltY = acc.y || 0;
+        ball.style.transform = `translate(${tiltX * 2}px, ${tiltY * 2}px)`;
+
+        // Логіка визначення різкого руху (тряски)
+        if (lastX !== null) {
+            const deltaX = Math.abs(acc.x - lastX);
+            const deltaY = Math.abs(acc.y - lastY);
+            const deltaZ = Math.abs(acc.z - lastZ);
+
+            if ((deltaX + deltaY + deltaZ) > shakeThreshold) {
+                triggerSuccess();
+            }
+        }
+
+        lastX = acc.x;
+        lastY = acc.y;
+        lastZ = acc.z;
+    }
+
+    // --- РЕЗЕРВНИЙ ВАРІАНТ (КЛІК) ---
+    // Якщо датчики не спрацювали або юзер на ПК
+    manualBtn.onclick = () => {
+        triggerSuccess();
     };
+    
+    // Також дозволяємо просто клікнути по самій кулі
+    ball.onclick = () => {
+        triggerSuccess();
+    };
+
+    // --- ЗАПУСК СЛУХАЧА ---
+    // Ми припускаємо, що дозвіл вже отримано в quest.js
+    window.addEventListener('devicemotion', handleMotion, true);
+
+    // --- ТАЙМЕР ПІДКАЗКИ ---
+    // Якщо через 4 секунди нічого не відбулося, показуємо кнопку
+    setTimeout(() => {
+        if(!isCompleted) {
+            hintDiv.style.opacity = '1';
+            instruction.textContent = "Потруси сильніше або натисни кнопку!";
+        }
+    }, 4000);
+
+    // --- ФУНКЦІЯ ОЧИЩЕННЯ ---
+    function cleanup() {
+        window.removeEventListener('devicemotion', handleMotion, true);
+    }
 }
 
-// 3. ЗАКЛЯТТЯ (З ВАЛІДАЦІЄЮ ТА СУЦІЛЬНИМ КОНТУРОМ)
+// 3. ЗАКЛЯТТЯ (Без змін, тільки коментарі)
 export function startSpell(container, onComplete) {
     container.innerHTML = `
         <h2 class="game-title">Відкрий Двері</h2>
-
         <p class="game-instruction">Обведи контур магічного замку</p>
         <div class="spell-area">
             <canvas id="spell-canvas" width="300" height="350"></canvas>
         </div>
         <div id="spell-msg" style="height:20px; margin-top:10px; color: #ffd700; font-weight: bold; text-align:center;"></div>
     `;
-// Додано можливість пропустити (для тестів)
+
     const title = container.querySelector('.game-title');
     title.onclick = () => {
          console.log("DEBUG: Закляття пропущено");
@@ -192,98 +267,51 @@ export function startSpell(container, onComplete) {
     const canvas = document.getElementById('spell-canvas');
     const ctx = canvas.getContext('2d');
     let isDrawing = false;
-    let checkpoints = []; // Масив точок для перевірки
-    let passedCheckpoints = new Set(); // Точки, через які пройшов юзер
+    let checkpoints = []; 
+    let passedCheckpoints = new Set(); 
 
-    // ФУНКЦІЯ МАЛЮВАННЯ ШЛЯХУ (Keyhole Shape)
     function drawKeyholePath(context) {
-        const cx = 150;
-        const cy = 130;
-        const radius = 50;
-        const bottomWidth = 100;
-        const bottomY = 280;
-
-        // Починаємо шлях
+        const cx = 150; const cy = 130; const radius = 50;
+        const bottomWidth = 100; const bottomY = 280;
         context.beginPath();
-        
-        // 1. Верхнє коло (Arc)
-        // Малюємо від кута ~135 градусів до ~45 градусів (за годинниковою)
-        // Щоб залишити низ відкритим для з'єднання з трикутником
-        const startAngle = Math.PI * 0.75; // 135 deg
-        const endAngle = Math.PI * 2.25;   // 405 deg (45 deg)
+        const startAngle = Math.PI * 0.75; 
+        const endAngle = Math.PI * 2.25;   
         context.arc(cx, cy, radius, startAngle, endAngle);
-
-        // 2. Лінія вниз праворуч
         context.lineTo(cx + bottomWidth / 2, bottomY);
-
-        // 3. Лінія вліво (дно)
         context.lineTo(cx - bottomWidth / 2, bottomY);
-
-        // 4. Лінія вгору до початку кола
-        // Вираховуємо точку на колі, де ми почали
         const startX = cx + radius * Math.cos(startAngle);
         const startY = cy + radius * Math.sin(startAngle);
         context.lineTo(startX, startY);
-
-        // НЕ замикаємо через closePath, щоб не було лінії посередині, але візуально воно замкнене
     }
 
-    // ГЕНЕРАЦІЯ ЧЕКПОІНТІВ (Для перевірки)
     function generateCheckpoints() {
         checkpoints = [];
-        const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = 300; tempCanvas.height = 350;
-        const tempCtx = tempCanvas.getContext('2d');
-        
-        drawKeyholePath(tempCtx);
-        
-        // Проходимось по шляху і ставимо точки (симуляція)
-        // Оскільки ми не можемо легко дістати точки з path, ми використаємо isPointInStroke
-        // Або простіше: математично додамо точки
-        
         const cx = 150, cy = 130, r = 50;
-        // Точки на колі
         for(let a = 0.75 * Math.PI; a <= 2.25 * Math.PI; a += 0.2) {
             checkpoints.push({x: cx + r * Math.cos(a), y: cy + r * Math.sin(a)});
         }
-        // Точки на лініях (спрощено)
-        // Права сторона
         checkpoints.push({x: 185, y: 165}); checkpoints.push({x: 200, y: 280});
-        // Низ
         checkpoints.push({x: 150, y: 280}); checkpoints.push({x: 100, y: 280});
-        // Ліва сторона
         checkpoints.push({x: 115, y: 165});
     }
 
     function drawGuide() {
-        // Очищаємо канвас
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-        // Стиль для контуру (пунктир)
         ctx.save();
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
         ctx.lineWidth = 10;
-        ctx.setLineDash([15, 10]); // Пунктир (обрізаний контур)
+        ctx.setLineDash([15, 10]); 
         ctx.lineJoin = 'round';
-        
         drawKeyholePath(ctx);
         ctx.stroke();
         ctx.restore();
     }
     
-    // Ініціалізація
     generateCheckpoints();
     drawGuide();
 
-    // Налаштування малювання користувача
-    ctx.lineWidth = 8; 
-    ctx.strokeStyle = '#ffd700'; 
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.shadowBlur = 10;
-    ctx.shadowColor = '#ffd700';
-    // Для користувача лінія суцільна
-    ctx.setLineDash([]); 
+    ctx.lineWidth = 8; ctx.strokeStyle = '#ffd700'; ctx.lineCap = 'round';
+    ctx.lineJoin = 'round'; ctx.shadowBlur = 10; ctx.shadowColor = '#ffd700'; ctx.setLineDash([]); 
 
     function getPos(e) {
         const rect = canvas.getBoundingClientRect();
@@ -293,58 +321,35 @@ export function startSpell(container, onComplete) {
     }
 
     function checkProximity(x, y) {
-        // Радіус зарахування точки
         const hitRadius = 20; 
         checkpoints.forEach((pt, index) => {
             const dist = Math.hypot(pt.x - x, pt.y - y);
-            if (dist < hitRadius) {
-                passedCheckpoints.add(index);
-            }
+            if (dist < hitRadius) { passedCheckpoints.add(index); }
         });
     }
 
     const start = (e) => { 
-        isDrawing = true; 
-        ctx.beginPath(); 
-        const p = getPos(e); 
-        ctx.moveTo(p.x, p.y);
-        checkProximity(p.x, p.y);
+        isDrawing = true; ctx.beginPath(); 
+        const p = getPos(e); ctx.moveTo(p.x, p.y); checkProximity(p.x, p.y);
     };
     
     const move = (e) => { 
-        if(!isDrawing) return; 
-        e.preventDefault(); 
-        const p = getPos(e); 
-        ctx.lineTo(p.x, p.y); 
-        ctx.stroke(); 
-        checkProximity(p.x, p.y);
+        if(!isDrawing) return; e.preventDefault(); 
+        const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); checkProximity(p.x, p.y);
     };
     
     const end = () => { 
-        if (!isDrawing) return;
-        isDrawing = false; 
-
-        // ПЕРЕВІРКА РЕЗУЛЬТАТУ
-        const totalPoints = checkpoints.length;
-        const hitPoints = passedCheckpoints.size;
+        if (!isDrawing) return; isDrawing = false; 
+        const totalPoints = checkpoints.length; const hitPoints = passedCheckpoints.size;
         const percentage = hitPoints / totalPoints;
         const msg = document.getElementById('spell-msg');
 
-        // Потрібно пройти хоча б 80% точок
         if (percentage > 0.8) {
-            msg.textContent = "Двері відчиняються...";
-            msg.style.color = "#44ff44";
+            msg.textContent = "Двері відчиняються..."; msg.style.color = "#44ff44";
             setTimeout(onComplete, 1500);
         } else {
-            msg.textContent = "Закляття не вийшло. Спробуй ще!";
-            msg.style.color = "#ff4444";
-            
-            // Очищаємо і даємо спробувати знову через секунду
-            setTimeout(() => {
-                passedCheckpoints.clear();
-                msg.textContent = "";
-                drawGuide(); // Перемальовуємо контур
-            }, 1500);
+            msg.textContent = "Закляття не вийшло. Спробуй ще!"; msg.style.color = "#ff4444";
+            setTimeout(() => { passedCheckpoints.clear(); msg.textContent = ""; drawGuide(); }, 1500);
         }
     };
 

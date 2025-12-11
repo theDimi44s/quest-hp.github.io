@@ -10,16 +10,106 @@ let questData = null;
 let keys = [];
 let score = { A:0, B:0, C:0, D:0 };
 
+// --- МЕНЕДЖЕР МУЗИКИ ---
+const musicManager = {
+    audio: new Audio(),
+    currentTrack: null,
+    fadeInterval: null,
+
+    // Універсальна функція фейду
+    fadeTo(targetVol, duration, callback) {
+        if (!this.audio) {
+            if(callback) callback();
+            return;
+        }
+        
+        if (this.fadeInterval) clearInterval(this.fadeInterval);
+
+        const steps = 10; // Мало кроків для швидкої роботи на мобільному
+        const stepTime = duration / steps;
+        
+        this.fadeInterval = setInterval(() => {
+            let newVol = this.audio.volume + (targetVol > this.audio.volume ? 0.1 : -0.1);
+            
+            if (newVol > 1) newVol = 1;
+            if (newVol < 0) newVol = 0;
+
+            // На iOS це може не спрацювати, але ми намагаємось
+            this.audio.volume = newVol;
+
+            // Умова виходу
+            if (Math.abs(this.audio.volume - targetVol) < 0.1 || (targetVol === 0 && newVol === 0)) {
+                this.audio.volume = targetVol;
+                clearInterval(this.fadeInterval);
+                if (callback) callback();
+            }
+        }, stepTime);
+    },
+    
+    playFadeIn(trackPath, loop = true, maxVolume = 0.5, fadeDuration = 3000) {
+        if(this.currentTrack === trackPath && !this.audio.paused) return;
+
+        this.audio.pause();
+        this.audio.currentTime = 0;
+        
+        this.audio.src = trackPath;
+        this.audio.loop = loop;
+        this.audio.volume = 0; 
+        this.currentTrack = trackPath;
+
+        const playPromise = this.audio.play();
+        if (playPromise !== undefined) {
+            playPromise.then(() => {
+                this.fadeTo(maxVolume, fadeDuration);
+            }).catch(e => {
+                console.log("Autoplay blocked. Waiting for click.");
+                document.addEventListener('click', () => {
+                    if(this.audio.paused && this.audio.src.includes(trackPath)) {
+                        this.audio.play();
+                        this.fadeTo(maxVolume, 1000); 
+                    }
+                }, { once: true });
+            });
+        }
+    },
+
+    // ОНОВЛЕНО: Гарантована зупинка з колбеком
+    stopFadeOut(duration = 1000, onComplete) {
+        // Запускаємо спробу зменшити гучність
+        this.fadeTo(0, duration);
+
+        // Але незалежно від того, чи спрацював fadeTo (через iOS обмеження),
+        // ми ставимо жорсткий таймер, який вирубить звук і перейде далі.
+        setTimeout(() => {
+            if (this.fadeInterval) clearInterval(this.fadeInterval);
+            this.audio.pause(); // ГАРАНТОВАНА ТИША
+            this.audio.currentTime = 0;
+            if (onComplete) onComplete();
+        }, duration + 50); // +50мс про запас
+    }
+};
+
 const audioFiles = {
   A: 'assets/audio/gryffindor.mp3', B: 'assets/audio/slytherin.mp3',
-  C: 'assets/audio/hufflepuff.mp3', D: 'assets/audio/ravenclaw.mp3'
+  C: 'assets/audio/hufflepuff.mp3', D: 'assets/audio/ravenclaw.mp3',
+  bgGame: 'assets/audio/answer-page.mp3',
+  bgSuccess: 'assets/audio/success.mp3'
 };
+
 const houses = { A: 'Грифіндор', B: 'Слизерин', C: 'Гафелпаф', D: 'Рейвенклов' };
 const houseBackgrounds = {
   A: 'https://images.unsplash.com/photo-1590422749830-49666c8f936e?auto=format&fit=crop&w=1400&q=80',
   B: 'https://images.unsplash.com/photo-1598153346810-860daa0d6cd6?auto=format&fit=crop&w=1400&q=80',
   C: 'https://images.unsplash.com/photo-1618519764620-7403abdbdfe9?auto=format&fit=crop&w=1400&q=80',
   D: 'https://images.unsplash.com/photo-1598153346810-860daa0d6cd6?auto=format&fit=crop&w=1400&q=80'
+};
+
+const crests = {
+    main: 'assets/img/h-main.png',
+    A: 'assets/img/h-gryf.png',
+    B: 'assets/img/h-slyt.png',
+    C: 'assets/img/h-haf.png',
+    D: 'assets/img/h-rav.png'
 };
 
 function shuffleArray(array) {
@@ -30,16 +120,20 @@ function shuffleArray(array) {
   return array;
 }
 
-// === ЗАВАНТАЖЕННЯ ДАНИХ ===
+// === ЗАВАНТАЖЕННЯ ===
 async function loadQuest(id){
   try {
+    setTimeout(() => {
+        musicManager.playFadeIn(audioFiles.bgGame, true, 0.4, 3000);
+    }, 1000);
+
     const resp = await fetch(`quests/${id}.json?v=${Math.random()}`);
-    if(!resp.ok) throw new Error(`Не вдалося завантажити квест (${resp.status})`);
+    if(!resp.ok) throw new Error(`Error ${resp.status}`);
     
     questData = await resp.json();
     if(titleEl) titleEl.textContent = questData.title;
     
-    startFirstTask(); 
+    startQuiz(); 
 
   } catch (e) {
     console.error(e);
@@ -47,271 +141,190 @@ async function loadQuest(id){
   }
 }
 
-// 1. ПАЗЛИ
-function startFirstTask() {
-    if(progressBar) progressBar.style.width = '10%';
-    if (typeof startPuzzle !== 'function') {
-        alert("Помилка: startPuzzle не знайдено");
-        return;
-    }
-    startPuzzle(questEl, () => {
-        startQuiz();
-    });
-}
-
-// 2. ВІКТОРИНА
+// === 1. ВІКТОРИНА ===
 function startQuiz() {
     keys = Object.keys(questData.questions || {});
-    score = { A:0, B:0, C:0, D:0 };
+    score = { A:0, B:0, C:0, D:0 }; 
     if(subEl) subEl.textContent = "Дай чесні відповіді";
     renderQuestion(0);
 }
 
 function renderQuestion(index){
   if(index >= keys.length) { 
-      showPermissionScreen(); 
+      let winner = 'A';
+      const pct = { A: score.A, B: score.B, C: score.C, D: score.D };
+      if(pct.B > pct[winner]) winner = 'B';
+      if(pct.C > pct[winner]) winner = 'C';
+      if(pct.D > pct[winner]) winner = 'D';
+      startSpellTask(winner); 
       return; 
   }
 
-  if(progressBar) progressBar.style.width = `${((index+1)/keys.length)*40 + 10}%`;
-
-  const key = keys[index];
-  const q = questData.questions[key];
-
+  if(progressBar) progressBar.style.width = `${((index+1)/keys.length)*20 + 10}%`;
+  const key = keys[index]; const q = questData.questions[key];
   questEl.innerHTML = '';
-
-  // 1. Картка Питання
-  const card = document.createElement('div'); 
-  card.className = 'q-card fade-in';
-  
-  const qText = document.createElement('div'); 
-  qText.className = 'q-text';
-  qText.textContent = q.text; 
-  card.appendChild(qText);
-
-  const opts = document.createElement('div'); 
-  opts.className = 'options';
-  
-  let shuffledOptions = [...q.options]; 
-  shuffleArray(shuffledOptions);
-
+  const card = document.createElement('div'); card.className = 'q-card fade-in';
+  const qText = document.createElement('div'); qText.className = 'q-text'; qText.textContent = q.text; card.appendChild(qText);
+  const opts = document.createElement('div'); opts.className = 'options';
+  let shuffledOptions = [...q.options]; shuffleArray(shuffledOptions);
   shuffledOptions.forEach((opt) => {
-    const b = document.createElement('button'); 
-    b.className = 'opt-btn'; 
-    b.textContent = opt.text;
-    b.onclick = () => {
-        if(score[opt.value] !== undefined) score[opt.value]++;
-        setTimeout(() => renderQuestion(index + 1), 200);
-    };
+    const b = document.createElement('button'); b.className = 'opt-btn'; b.textContent = opt.text;
+    b.onclick = () => { if(score[opt.value] !== undefined) score[opt.value]++; setTimeout(() => renderQuestion(index + 1), 200); };
     opts.appendChild(b);
   });
   card.appendChild(opts);
-  
-  const counter = document.createElement('div');
-  counter.style.marginTop = '15px'; 
-  counter.style.fontSize = '14px'; 
-  counter.style.opacity = '0.5';
-  counter.style.fontWeight = '700';
-  counter.textContent = `Питання ${index + 1} / ${keys.length}`;
-  card.appendChild(counter);
-
-  // 2. Кнопки навігації (ВНИЗУ)
-  const navDiv = document.createElement('div');
-  navDiv.className = 'nav-controls';
-
-  const btnRestart = document.createElement('button');
-  btnRestart.className = 'nav-btn'; 
-  btnRestart.textContent = 'Почати спочатку';
-  btnRestart.onclick = () => location.reload();
-  
-  const btnBackNav = document.createElement('button');
-  btnBackNav.className = 'nav-btn'; 
-  btnBackNav.textContent = 'Назад';
-  btnBackNav.onclick = () => {
-      if (index === 0) {
-          window.location.href = 'index.html'; 
-      } else {
-          renderQuestion(index - 1);
-      }
-  };
-
-  navDiv.appendChild(btnRestart);
-  navDiv.appendChild(btnBackNav);
-
-  questEl.appendChild(card);
-  questEl.appendChild(navDiv);
+  const counter = document.createElement('div'); counter.style.marginTop = '15px'; counter.style.fontSize = '14px'; counter.style.opacity = '0.5'; counter.style.fontWeight = '700'; counter.textContent = `Питання ${index + 1} / ${keys.length}`; card.appendChild(counter);
+  const navDiv = document.createElement('div'); navDiv.className = 'nav-controls';
+  const btnRestart = document.createElement('button'); btnRestart.className = 'nav-btn'; btnRestart.textContent = 'Почати спочатку'; btnRestart.onclick = () => location.reload();
+  const btnBackNav = document.createElement('button'); btnBackNav.className = 'nav-btn'; btnBackNav.textContent = 'Назад'; btnBackNav.onclick = () => { if (index === 0) window.location.href = 'index.html'; else renderQuestion(index - 1); };
+  navDiv.appendChild(btnRestart); navDiv.appendChild(btnBackNav);
+  questEl.appendChild(card); questEl.appendChild(navDiv);
 }
 
-// ЕКРАН ДОЗВОЛУ (для Кулі)
-function showPermissionScreen() {
+// === 2. ЗАМОК ===
+function startSpellTask(winner) {
+    if(progressBar) progressBar.style.width = '40%'; 
+    startSpell(questEl, () => { startPuzzleTask(winner); });
+}
+
+// === 3. ПАЗЛ ===
+function startPuzzleTask(winner) {
+    if(progressBar) progressBar.style.width = '60%'; 
+    if (typeof startPuzzle !== 'function') { alert("Err: startPuzzle"); return; }
+    startPuzzle(questEl, () => { showPermissionScreen(winner); });
+}
+
+// === 4. КУЛЯ (ПЕРЕНЕСЕНО) ===
+function startOrbTask(winner) {
+    if(progressBar) progressBar.style.width = '85%';
+    
+    // ОНОВЛЕНА ЛОГІКА:
+    // 1. Граємо в кулю
+    // 2. Коли виграли -> ВИМИКАЄМО МУЗИКУ (1 сек)
+    // 3. Тільки потім -> renderResult
+    startOrb(questEl, winner, () => {
+        musicManager.stopFadeOut(1000, () => {
+            renderResult(winner);
+        });
+    });
+}
+
+// === ЕКРАН ДОЗВОЛУ ===
+function showPermissionScreen(winner) {
     if(subEl) subEl.textContent = "Налаштування магії";
     questEl.innerHTML = '';
-    
-    const card = document.createElement('div'); 
-    card.className = 'q-card fade-in';
-    card.style.textAlign = 'center';
-// Заголовок "Зал Пророцтв" 
-    const h2 = document.createElement('h2'); 
-    h2.textContent = "Зал Пророцтв"; 
-    h2.style.marginBottom = '20px';
-    
-        const p = document.createElement('p'); 
-        p.textContent = `Зал Пророцтв — одна з восьми відомих кімнат Відділу Таємниць, розташована у підземних рівнях Міністерства магії. Саме тут, серед нескінченних стелажів, що зникають у висоті темного склепіння, зберігаються записи всіх пророцтв — здійснених і ще не здійснених.
-    
-    У вічному напівмороку мерехтять безліч скляних кульок. Погаслі й холодні — це ті, що вже збулися. Теплі та світні — ті, що ще очікують свого часу. Взяти пророчий шар може лише той, про кого саме йдеться у пророцтві. Під кожною кулькою закріплена табличка з іменем провидця та того, кому адресовано передбачення.`;
-    
-    const btn = document.createElement('button'); 
-    btn.className = 'btn-primary';
-    btn.textContent = "Увійти";
-    btn.style.marginTop = '20px';
+    const card = document.createElement('div'); card.className = 'q-card fade-in'; card.style.textAlign = 'center';
+    const h2 = document.createElement('h2'); h2.textContent = "Зал Пророцтв"; h2.style.marginBottom = '20px'; h2.style.fontSize = '24px';
+    const p = document.createElement('p'); p.style.fontWeight = '700'; p.style.fontSize = '16px';
+    p.textContent = `Зал Пророцтв — одна з восьми відомих кімнат Відділу Таємниць. У вічному напівмороку мерехтять безліч скляних кульок...`; 
+    const btn = document.createElement('button'); btn.className = 'btn-primary'; btn.textContent = "Увійти"; btn.style.marginTop = '20px';
     
     btn.onclick = () => {
         if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
-            DeviceMotionEvent.requestPermission()
-                .then(response => startOrbTask())
-                .catch(e => startOrbTask());
-        } else {
-            startOrbTask();
-        }
+            DeviceMotionEvent.requestPermission().then(r => startOrbTask(winner)).catch(e => startOrbTask(winner));
+        } else { startOrbTask(winner); }
     };
-    
-    card.appendChild(h2); 
-    card.appendChild(p); 
-    card.appendChild(btn);
-    questEl.appendChild(card);
+    card.appendChild(h2); card.appendChild(p); card.appendChild(btn); questEl.appendChild(card);
 }
 
-// 3. КУЛЯ
-function startOrbTask() {
-    if(progressBar) progressBar.style.width = '70%';
-    
-    let winner = 'A';
-    const pct = { A: score.A, B: score.B, C: score.C, D: score.D };
-    if(pct.B > pct[winner]) winner = 'B';
-    if(pct.C > pct[winner]) winner = 'C';
-    if(pct.D > pct[winner]) winner = 'D';
-
-    startOrb(questEl, winner, () => {
-        startSpellTask(winner);
-    });
-}
-
-// 4. ЗАКЛЯТТЯ
-function startSpellTask(winner) {
-    if(progressBar) progressBar.style.width = '90%';
-    startSpell(questEl, () => {
-        renderResult(winner);
-    });
-}
-
-// 5. РЕЗУЛЬТАТ
+// === 5. РЕЗУЛЬТАТ (ФІНАЛ) ===
 function renderResult(winner){
   if(progressBar) progressBar.style.width = '100%';
   if(subEl) subEl.textContent = "Розподіл завершено";
   
-  questEl.innerHTML = '';
-  const wrap = document.createElement('div'); 
-  wrap.className = 'result-wrap fade-in';
+  // ТУТ МИ ВЖЕ НЕ ЧІПАЄМО ФОНОВУ МУЗИКУ, БО ВОНА ВЖЕ ВИМКНЕНА
+  
+  // 1. ОДРАЗУ ГРАЄ УСПІХ (success.mp3)
+  const successAudio = new Audio(audioFiles.bgSuccess);
+  successAudio.volume = 0.7;
+  successAudio.play().catch(e=>{});
 
-  const title = document.createElement('h2');
-  title.textContent = `Вітаємо на факультеті — ${houses[winner]}!`;
-  title.style.margin = '20px 0'; 
-  title.style.fontSize = '29px';
-  title.style.color = '#fff';
-  title.style.textShadow = '0 0 10px rgba(0,0,0,0.8)';
+  // 2. ГОЛОС КАПЕЛЮХА: Затримка 2.5 сек
+  setTimeout(() => {
+      let vol = successAudio.volume;
+      successAudio.volume = 0.3; 
+      playHouseAudio(winner, () => {
+           successAudio.volume = vol;
+      });
+  }, 2500);
+
+  questEl.innerHTML = '';
+  const wrap = document.createElement('div'); wrap.className = 'result-wrap fade-in';
+
+  const crestDiv = document.createElement('div'); crestDiv.className = 'crests-container';
+  const leftCrest = document.createElement('img'); leftCrest.src = crests[winner]; leftCrest.className = 'crest-img crest-side';
+  const mainCrest = document.createElement('img'); mainCrest.src = crests.main; mainCrest.className = 'crest-img crest-main';
+  const rightCrest = document.createElement('img'); rightCrest.src = crests[winner]; rightCrest.className = 'crest-img crest-side';
+
+  crestDiv.appendChild(leftCrest); crestDiv.appendChild(mainCrest); crestDiv.appendChild(rightCrest);
+  wrap.appendChild(crestDiv);
+
+  const textDiv = document.createElement('div'); textDiv.className = 'result-text-container';
+  const title = document.createElement('h2'); title.textContent = `Вітаємо на факультеті — ${houses[winner]}!`;
+  title.style.margin = '20px 0'; title.style.fontSize = '29px'; title.style.color = '#fff'; title.style.textShadow = '0 0 10px rgba(0,0,0,0.8)';
+  textDiv.appendChild(title);
+
+  const actions = document.createElement('div'); actions.className = 'action-row';
   
-  const actions = document.createElement('div'); 
-  actions.className = 'action-row';
-  
-  const playBtn = document.createElement('button'); 
-  playBtn.className = 'btn-primary';
+  const playBtn = document.createElement('button'); playBtn.className = 'btn-primary';
   playBtn.textContent = 'Прослухати ще раз';
-  playBtn.onclick = () => playHouseAudio(winner);
+  playBtn.onclick = () => {
+       successAudio.volume = 0.2;
+       playHouseAudio(winner, () => { successAudio.volume = 0.7; });
+  };
   
-  const restartBtn = document.createElement('button');
-  restartBtn.className = 'btn-primary';
-  restartBtn.textContent = 'Пройти знову';
-  restartBtn.style.marginLeft = '10px';
+  const restartBtn = document.createElement('button'); restartBtn.className = 'btn-primary';
+  restartBtn.textContent = 'Пройти знову'; restartBtn.style.marginLeft = '10px';
   restartBtn.onclick = () => location.reload();
 
-  actions.appendChild(playBtn);
-  actions.appendChild(restartBtn);
-  
-  wrap.appendChild(title); 
-  wrap.appendChild(actions);
+  actions.appendChild(playBtn); actions.appendChild(restartBtn);
+  textDiv.appendChild(actions);
+  wrap.appendChild(textDiv);
   questEl.appendChild(wrap);
 
   document.body.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('${houseBackgrounds[winner]}')`;
-
-  playHouseAudio(winner);
 }
 
+// Голос факультету
 let houseAudio = new Audio();
-function playHouseAudio(code){
+function playHouseAudio(code, onEndCallback){
   const src = audioFiles[code];
   if(!src) return;
+  
   houseAudio.pause(); 
   houseAudio = new Audio(src); 
-  houseAudio.volume = 0.8;
+  houseAudio.volume = 1.0;
   houseAudio.play().catch(e=>{});
+  
+  houseAudio.onended = () => {
+      if(onEndCallback) onEndCallback();
+  };
 }
 
-// ІНІЦІАЛІЗАЦІЯ
+// Init
 document.addEventListener('DOMContentLoaded', () => {
-    
-    // 1. ВИБІР ФОНУ (1 або 2)
     const bg = document.getElementById('page-bg');
     if(bg) {
         const randomNum = Math.random() > 0.5 ? '1' : '2';
         bg.style.backgroundImage = `url('assets/img/castle-bg${randomNum}.jpg')`;
     }
-
-    // 2. ГЕНЕРАЦІЯ МАГІЧНИХ СВІЧОК
     const candleContainer = document.getElementById('magic-candles-container');
     if (candleContainer) {
         const candleImages = ['c1.png', 'c2.png', 'c3.png', 'c4.png'];
-        const totalCandles = 70; // Кількість свічок
-
-        for (let i = 0; i < totalCandles; i++) {
+        for (let i = 0; i < 70; i++) {
             const img = document.createElement('img');
             const randomImg = candleImages[Math.floor(Math.random() * candleImages.length)];
-            img.src = `assets/img/${randomImg}`;
-            img.classList.add('magic-candle'); 
-
-            // Розмір та глибина
-            const size = 2 + Math.random() * 5; // 
-            img.style.width = `${size}px`;
-            img.style.height = 'auto';
-
-            // Позиція
-            img.style.left = `${Math.random() * 100}%`;
-            img.style.top = `${Math.random() * 100}%`;
-
-            // Стилі глибини
-            if (size < 70) {
-                img.style.opacity = '0.3';
-                img.style.filter = 'blur(3px)';
-                img.style.zIndex = '0';
-            } else {
-                img.style.opacity = '0.9';
-                img.style.filter = 'blur(0px)';
-                img.style.zIndex = '2';
-            }
-
-            // Анімація
-            const duration = 3 + Math.random() * 10;
-            const delay = -(Math.random() * 10);
-            
-            img.style.animationName = 'floatAnimation';
-            img.style.animationDuration = `${duration}s`;
-            img.style.animationDelay = `${delay}s`;
-            img.style.animationIterationCount = 'infinite';
+            img.src = `assets/img/${randomImg}`; img.classList.add('magic-candle'); 
+            const size = 2 + Math.random() * 5; img.style.width = `${size}px`; img.style.height = 'auto';
+            img.style.left = `${Math.random() * 100}%`; img.style.top = `${Math.random() * 100}%`;
+            if (size < 70) { img.style.opacity = '0.3'; img.style.filter = 'blur(3px)'; img.style.zIndex = '0'; } 
+            else { img.style.opacity = '0.9'; img.style.filter = 'blur(0px)'; img.style.zIndex = '2'; }
+            const duration = 3 + Math.random() * 10; const delay = -(Math.random() * 10);
+            img.style.animationName = 'floatAnimation'; img.style.animationDuration = `${duration}s`;
+            img.style.animationDelay = `${delay}s`; img.style.animationIterationCount = 'infinite';
             img.style.animationTimingFunction = 'ease-in-out';
-
             candleContainer.appendChild(img);
         }
     }
-
-    // 3. ЗАПУСК ГРИ
     loadQuest('001');
 });
