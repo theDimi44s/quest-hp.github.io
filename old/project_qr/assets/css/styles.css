@@ -1,0 +1,315 @@
+@font-face {
+    font-family: 'Harry P';
+    src: url('../fonts/HarryP.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+body {
+    font-family: 'Harry P', sans-serif;
+    color: #ffd700; /* Золотий колір для тексту */
+    text-align: center;
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    position: relative;
+    background: linear-gradient(to bottom, #000033 0%, #000066 100%); /* Нічний градієнт */
+}
+
+.night-sky {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    overflow: hidden;
+}
+
+.castle-silhouette {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
+    max-width: 800px;
+    opacity: 0.8;
+    object-fit: contain;
+    background: transparent;
+}
+
+.moon {
+    position: absolute;
+    top: 10%;
+    right: -10%;
+    width: 100px;
+    max-width: 15vw;
+    animation: moonMove 60s linear infinite;
+    background: transparent;
+}
+
+@keyframes moonMove {
+    0% { right: -10%; }
+    100% { right: 110%; }
+}
+
+.owl {
+    position: absolute;
+    width: 50px;
+    max-width: 8vw;
+    opacity: 0.9;
+    animation-duration: 20s;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    background: transparent;
+}
+
+.owl-path1 {
+    top: 20%;
+    left: -10%;
+    animation-name: flyStraight;
+    animation-delay: 0s;
+}
+
+@keyframes flyStraight {
+    0% { left: -10%; }
+    100% { left: 110%; }
+}
+
+.owl-path2 {
+    top: 30%;
+    left: -10%;
+    animation-name: flyWavy;
+    animation-delay: 10s;
+}
+
+@keyframes flyWavy {
+    0% { left: -10%; top: 30%; }
+    50% { left: 50%; top: 40%; }
+    100% { left: 110%; top: 30%; }
+}
+
+.owl-path3 {
+    top: 40%;
+    left: -10%;
+    animation-name: flyCurve;
+    animation-delay: 20s;
+}
+
+@keyframes flyCurve {
+    0% { left: -10%; top: 50%; }
+    50% { left: 50%; top: 20%; }
+    100% { left: 110%; top: 50%; }
+}
+
+.stars {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+}
+
+.stars::before, .stars::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: url(data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz48c3ZnIHdpZHRoPSIyMDBweCIgaGVpZ2h0PSIyMDBweCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+PHRpdGxlPlN0YXJzPC90aXRsZT48ZyBzdHJva2U9Im5vbmUiIHN0cm9rZS13aWR0aD0iMSIgc3Ryb2tlLW9wYWNpdHk9IjAuOCIgZmlsbD0ibm9uZSIgZmlsbC1vcGFjaXR5PSIwLjgiPjxjaXJjbGUgZmlsbD0iI0ZGRkZGRiIgY3g9IjEwMCIgY3k9IjEwMCIgcj0iMiIgLz48Y2lyY2xlIGZpbGw9IiNGRkZGRkYiIGN4PSIzMCIgY3k9IjMwIiByPSIxIiAvPjxjaXJjbGUgZmlsbD0iI0ZGRkZGRiIgY3g9IjE3MCIgY3k9IjE3MCIgcj0iMSIgLz48Y2lyY2xlIGZpbGw9IiNGRkZGRkYiIGN4PSI1MCIgY3k9IjE1MCIgcj0iMS41IiAvPjxjaXJjbGUgZmlsbD0iI0ZGRkZGRiIgY3g9IjE1MCIgY3k9IjUwIiByPSIxIiAvPjxnPjwvZz48L3N2Zz4=) repeat;
+    opacity: 0.5;
+    animation: twinkle 2s infinite alternate;
+}
+
+.stars::after {
+    background-position: 50px 50px;
+    opacity: 0.7;
+    animation: twinkle 3s infinite alternate;
+}
+
+@keyframes twinkle {
+    0% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+.container {
+    background: rgba(210, 180, 140, 0.6); /* Пергаментний колір з прозорістю */
+    padding: 30px;
+    border-radius: 15px;
+    max-width: 700px;
+    width: 90%;
+    box-shadow: 0 0 30px rgba(255, 215, 0, 0.7); /* Посилене золоте сяйво */
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(255,255,255,0.1) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.1) 75%, transparent 75%, transparent); /* Змінений візерунок ліній */
+    background-size: 40px 40px;
+    opacity: 0.3;
+    pointer-events: none;
+}
+
+h1 {
+    font-size: 2.5em;
+    text-shadow: 3px 3px 6px #000; /* Глибша тінь */
+    margin: 0 0 20px;
+    width: 100%;
+}
+
+p {
+    font-size: 1.2em;
+    margin: 0 0 20px;
+    width: 100%;
+}
+
+button {
+    background: linear-gradient(to bottom, #a0522d, #cd853f); /* Змінений градієнт для пергаменту */
+    color: #fff;
+    border: 3px solid #ffd700;
+    padding: 15px 30px;
+    margin: 10px 0;
+    cursor: pointer;
+    font-family: 'Harry P', sans-serif;
+    font-size: 1.5em;
+    border-radius: 12px;
+    transition: transform 0.3s, box-shadow 0.3s;
+    width: 100%;
+    max-width: 300px;
+    position: relative;
+    overflow: hidden;
+}
+
+button::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 200%;
+    height: 100%;
+    background: radial-gradient(circle, rgba(255,255,255,0.4) 10%, transparent 60%);
+    opacity: 0;
+    transition: opacity 0.5s, left 0.5s;
+    filter: blur(10px); /* Туманний ефект */
+}
+
+button:hover::after, button:active::after {
+    opacity: 1;
+    left: 0;
+}
+
+button:hover, button:active {
+    transform: scale(1.05);
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.8);
+}
+
+#options button {
+    margin: 10px 0; /* Рівномірний відступ */
+}
+
+.result-container {
+    background: none;
+}
+
+.sorting-hat {
+    width: 250px;
+    max-width: 80%;
+    margin: 30px 0;
+    background: transparent;
+}
+
+#house-logo {
+    width: 200px;
+    max-width: 60%;
+    margin-bottom: 30px;
+    background: transparent; /* Без фону */
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    h1 {
+        font-size: 2em;
+    }
+
+    p {
+        font-size: 1em;
+    }
+
+    button {
+        font-size: 1.2em;
+        padding: 12px 24px;
+    }
+
+    .container {
+        padding: 20px;
+    }
+
+    .moon {
+        width: 80px;
+    }
+
+    .owl {
+        width: 40px;
+    }
+
+    .sorting-hat {
+        width: 200px;
+    }
+
+    #house-logo {
+        width: 150px;
+    }
+}
+
+@media (max-width: 480px) {
+    h1 {
+        font-size: 1.5em;
+    }
+
+    p {
+        font-size: 0.9em;
+    }
+
+    button {
+        font-size: 1em;
+        padding: 10px 20px;
+    }
+
+    .container {
+        padding: 15px;
+        width: 95%;
+    }
+
+    .moon {
+        width: 60px;
+    }
+
+    .owl {
+        width: 30px;
+    }
+
+    .sorting-hat {
+        width: 150px;
+    }
+
+    #house-logo {
+        width: 120px;
+    }
+}
