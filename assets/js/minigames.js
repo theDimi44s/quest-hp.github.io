@@ -1,10 +1,9 @@
 // assets/js/minigames.js
 
-// 1. ПАЗЛ (Без змін, тільки коментарі)
+// 1. ПАЗЛ (Без змін)
 export function startPuzzle(container, onComplete) {
     container.innerHTML = '';
 
-    // --- НЕВИДИМА КНОПКА ДЛЯ ТЕСТІВ (ЛІВИЙ ВЕРХНІЙ КУТ) ---
     const cheatBtn = document.createElement('div');
     cheatBtn.style.position = 'fixed'; 
     cheatBtn.style.top = '0'; cheatBtn.style.left = '0';
@@ -13,20 +12,16 @@ export function startPuzzle(container, onComplete) {
     
     cheatBtn.onclick = (e) => {
         e.stopPropagation(); 
-        console.log("DEV: Рівень пропущено через приховану кнопку");
+        console.log("DEV: Рівень пропущено");
         if (onComplete) onComplete();
     };
     container.appendChild(cheatBtn);
-    // -----------------------------------------------------
 
     const h1 = document.createElement('h1'); h1.className = 'game-title'; h1.textContent = 'Віднови Замок';
     const p = document.createElement('p'); p.className = 'game-instruction'; p.textContent = 'Збери пазл';
  
-    // === РАНДОМНИЙ ВИБІР ЗОБРАЖЕННЯ ===
     const puzzleOptions = ['assets/img/hippo.png', 'assets/img/library.png'];
-    // Вибираємо випадкове зображення
     const imageSrc = puzzleOptions[Math.floor(Math.random() * puzzleOptions.length)];
-    // ===================================
 
     const refContainer = document.createElement('div'); refContainer.className = 'reference-container';
     refContainer.innerHTML = `<img src="${imageSrc}" class="reference-img" alt="Зразок">`;
@@ -120,14 +115,11 @@ export function startPuzzle(container, onComplete) {
                 el.style.left = el.dataset.targetX + 'px'; el.style.top = el.dataset.targetY + 'px';
                 el.style.transform = 'rotate(0deg)'; guideEl.appendChild(el); el.classList.add('snapped');
                 placedCount++;
-                
-                // === ВИПРАВЛЕНО: Затримка 3 секунди (3000мс) ===
                 if (placedCount === maxPieces) { 
                     setTimeout(() => { 
                         if (callback) callback(); 
                     }, 3000); 
                 }
-                // ===============================================
             }
         };
         el.addEventListener('mousedown', start); document.addEventListener('mousemove', move); document.addEventListener('mouseup', end);
@@ -135,9 +127,8 @@ export function startPuzzle(container, onComplete) {
     }
 }
 
-// 2. КУЛЯ (ОНОВЛЕНО: Тряска + Клік)
+// 2. КУЛЯ (ОНОВЛЕНО: Затримки тексту та переходу)
 export function startOrb(container, winner, onComplete) {
-    // 1. Створення HTML
     container.innerHTML = `
         <h2 class="game-title">Зал Пророцтв</h2>
         <p class="game-instruction" id="orb-instruction">Потруси телефон, щоб розвіяти дим!</p>
@@ -146,13 +137,12 @@ export function startOrb(container, winner, onComplete) {
                 <div class="orb-glow-color" id="orb-color"></div>
             </div>
         </div>
-        <div id="manual-shake-hint" style="margin-top:20px; opacity:0; transition:opacity 1s; color: #aaa; font-size:14px;">
+        <div id="manual-shake-hint" style="margin-top:25px; min-height: 40px; opacity:0; transition:opacity 1s; color: #aaa; font-size:14px; text-align: center;">
            Магія не спрацьовує? <br>
            <button class="btn-primary" id="manual-btn" style="margin-top:10px; font-size:16px;">Натиснути на кулю</button>
         </div>
     `;
 
-    // --- НЕВИДИМА КНОПКА ДЛЯ ПРОПУСКУ ---
     const title = container.querySelector('.game-title');
     if(title) {
         title.onclick = () => {
@@ -172,7 +162,7 @@ export function startOrb(container, winner, onComplete) {
     const targetColor = colors[winner] || '#fff';
     colorLayer.style.setProperty('--smoke-color', targetColor);
 
-    let shakeThreshold = 15; // Чутливість тряски (чим менше число, тим легше)
+    let shakeThreshold = 15; 
     let lastX = null, lastY = null, lastZ = null;
     let isCompleted = false;
 
@@ -181,68 +171,56 @@ export function startOrb(container, winner, onComplete) {
         if(isCompleted) return;
         isCompleted = true;
 
-        // Вібрація (якщо підтримується)
         if(navigator.vibrate) navigator.vibrate(200);
 
-        // Візуал
+        // 1. Показуємо дим
         colorLayer.style.opacity = '1'; 
         instruction.textContent = "Доля визначена...";
-        hintDiv.style.display = 'none';
+        
+        // 2. ХОВАЄМО КНОПКУ МИТТЄВО (щоб вона не висіла)
+        // Робимо прозорим блок. Кнопка всередині теж зникне.
+        hintDiv.style.opacity = '0';
+        
+        // 3. ЗМІНА ТЕКСТУ через 1.5 секунди (вимога 1)
+        setTimeout(() => {
+            // Повністю замінюємо контент (кнопка видаляється з DOM)
+            hintDiv.innerHTML = '<span style="color: #ffd700; font-size: 18px; font-weight: bold; text-shadow: 0 0 10px rgba(0,0,0,0.8);">Мені здається, ми обрали тобі факультет!</span>';
+            
+            // Плавно показуємо текст
+            hintDiv.style.display = 'block';
+            hintDiv.style.opacity = '1';
+        }, 1500); 
 
-        cleanup(); // Прибираємо слухачі
+        cleanup(); 
 
-        // Чекаємо 3 секунди і йдемо далі
+        // 4. ПЕРЕХІД через 6 секунд (щоб встигли прочитати)
+        // (1.5 сек затримка тексту + 4.5 сек на читання = 6 сек)
         setTimeout(() => {
             if(onComplete) onComplete();
-        }, 3000);
+        }, 6000);
     }
 
-    // --- ОБРОБНИК РУХУ (ТРЯСКИ) ---
     function handleMotion(event) {
         if(isCompleted) return;
-
-        // Отримуємо прискорення (з гравітацією для кращої сумісності)
         const acc = event.accelerationIncludingGravity;
         if (!acc) return;
-
-        // Візуальний ефект: рухаємо кулю відповідно до нахилу телефону
-        const tiltX = acc.x || 0;
-        const tiltY = acc.y || 0;
+        const tiltX = acc.x || 0; const tiltY = acc.y || 0;
         ball.style.transform = `translate(${tiltX * 2}px, ${tiltY * 2}px)`;
 
-        // Логіка визначення різкого руху (тряски)
         if (lastX !== null) {
             const deltaX = Math.abs(acc.x - lastX);
             const deltaY = Math.abs(acc.y - lastY);
             const deltaZ = Math.abs(acc.z - lastZ);
-
-            if ((deltaX + deltaY + deltaZ) > shakeThreshold) {
-                triggerSuccess();
-            }
+            if ((deltaX + deltaY + deltaZ) > shakeThreshold) triggerSuccess();
         }
-
-        lastX = acc.x;
-        lastY = acc.y;
-        lastZ = acc.z;
+        lastX = acc.x; lastY = acc.y; lastZ = acc.z;
     }
 
-    // --- РЕЗЕРВНИЙ ВАРІАНТ (КЛІК) ---
-    // Якщо датчики не спрацювали або юзер на ПК
-    manualBtn.onclick = () => {
-        triggerSuccess();
-    };
-    
-    // Також дозволяємо просто клікнути по самій кулі
-    ball.onclick = () => {
-        triggerSuccess();
-    };
+    manualBtn.onclick = () => { triggerSuccess(); };
+    ball.onclick = () => { triggerSuccess(); };
 
-    // --- ЗАПУСК СЛУХАЧА ---
-    // Ми припускаємо, що дозвіл вже отримано в quest.js
     window.addEventListener('devicemotion', handleMotion, true);
 
-    // --- ТАЙМЕР ПІДКАЗКИ ---
-    // Якщо через 4 секунди нічого не відбулося, показуємо кнопку
     setTimeout(() => {
         if(!isCompleted) {
             hintDiv.style.opacity = '1';
@@ -250,13 +228,12 @@ export function startOrb(container, winner, onComplete) {
         }
     }, 4000);
 
-    // --- ФУНКЦІЯ ОЧИЩЕННЯ ---
     function cleanup() {
         window.removeEventListener('devicemotion', handleMotion, true);
     }
 }
 
-// 3. ЗАКЛЯТТЯ (Без змін, тільки коментарі)
+// 3. ЗАКЛЯТТЯ (Без змін)
 export function startSpell(container, onComplete) {
     container.innerHTML = `
         <h2 class="game-title">Відкрий Двері</h2>

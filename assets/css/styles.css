@@ -325,9 +325,13 @@ button {
     border-radius: 50%; 
     position: relative; 
     
-    /* Фон напівпрозорий */
+    /* Фон напівпрозорий 
     background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.1), rgba(0, 0, 0, 0.3));
-    
+    */
+
+    /* ЗМІНА: Зменшуємо чорноту з 0.3 до 0.1, додаємо більше бліку (0.2) */
+    background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.2), rgba(0, 0, 0, 0.1));
+
     /* Тіні для об'єму */
     box-shadow: 
         inset 0 0 30px rgba(0,0,0,0.8), 
@@ -346,16 +350,42 @@ button {
     transform: translateZ(0); /* Додатковий фікс для Safari */
 }
 
+/* ДИМ В КУЛІ OLD VERSION 
 .orb-glow-color { 
     position: absolute; 
     inset: -50%; 
     opacity: 0; 
     transition: opacity 2s ease;
-    /* Колір диму */
+    /* Колір диму */ /*
     background: conic-gradient(from 0deg, transparent 0%, var(--smoke-color, #fff) 20%, transparent 40%, var(--smoke-color, #fff) 60%, transparent 80%, var(--smoke-color, #fff) 100%);
     filter: blur(30px); 
     animation: smokeSpin 4s linear infinite; 
     mix-blend-mode: hard-light;
+}
+
+*/
+
+/* ДИМ В КУЛІ OLD VERSION  */
+.orb-glow-color { 
+    position: absolute; 
+    inset: -50%; 
+    opacity: 0; 
+    transition: opacity 2s ease;
+    
+    /* Колір диму */
+    background: conic-gradient(from 0deg, transparent 0%, var(--smoke-color, #fff) 20%, transparent 40%, var(--smoke-color, #fff) 60%, transparent 80%, var(--smoke-color, #fff) 100%);
+    
+    /* === ГОЛОВНІ ЗМІНИ ТУТ === */
+    
+    /* 1. Більше розмиття для м'якості */
+    /* 2. brightness(2.0) - подвоює яскравість кольору */
+    /* 3. drop-shadow - створює ефект світіння навколо */
+    filter: blur(40px) brightness(2.0) drop-shadow(0 0 20px var(--smoke-color)); 
+    
+    /* screen - працює як світло (додає яскравість до фону), замість hard-light */
+    mix-blend-mode: screen;
+    
+    animation: smokeSpin 4s linear infinite; 
 }
 
 @keyframes smokeSpin {
