@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Пригода починається</title>
+    <link href="https://fonts.cdnfonts.com/css/harry-potter" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+    <div id="page-bg" aria-hidden="true"></div>
+
+    <div id="candle-overlay-2"></div>
+    <div id="candle-overlay"></div>
+
+    <main class="quest-wrap" id="quest">
+        </main>
+    
+    <div class="progress-bar"><i style="width: 0%"></i></div>
+
+    <script type="module" src="assets/js/quest.js"></script>
+    
+    <script>
+       document.addEventListener('DOMContentLoaded', () => {
+         const bg = document.getElementById('page-bg');
+         if(bg) {
+           const randomNum = Math.random() > 0.5 ? '1' : '2';
+           bg.style.backgroundImage = `url('assets/img/castle-bg${randomNum}.jpg')`;
+         }
+       });
+    </script>
+</body>
+</html>

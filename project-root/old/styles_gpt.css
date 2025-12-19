@@ -1,0 +1,251 @@
+/* ====================================================
+   styles.css — повний файл для вітальної сторінки та квесту
+   ==================================================== */
+
+/* ========== Змінні ========== */
+:root{
+  --bg-dark: #05050a;
+  --card: rgba(18,16,14,0.88);
+  --accent: #c43b3b;
+  --muted: #efe6d6;
+  --perg-color: #efe1c6; /* пергамент */
+  --perg-edge: #d6c39a;
+  --hp-font: 'Harry Potter', Georgia, serif;
+  --sys-font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+}
+
+/* ========== Глобальні стилі ========== */
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  min-height:100vh;
+  font-family: var(--sys-font);
+  color: var(--muted);
+  background:
+    radial-gradient(ellipse at top, rgba(0,0,0,0.55), rgba(0,0,0,0.8)),
+    url('https://images.unsplash.com/photo-1503264116251-35a269479413?auto=format&fit=crop&w=1920&q=80') center/cover fixed no-repeat;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+}
+
+/* затемнення над фоном */
+#page-bg{
+  position:fixed; inset:0; z-index:0;
+  background: linear-gradient(180deg, rgba(0,0,0,0.55), rgba(0,0,0,0.78));
+}
+
+/* ========== ВІТАЛЬНА СТОРІНКА (КОНВЕРТ) ========== */
+.welcome-wrap{
+  position:relative;
+  z-index:2;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  height:100vh;
+  padding:20px;
+}
+
+/* Envelope container (пергаментний конверт) */
+.envelope{
+  width:460px;
+  max-width:92vw;
+  height:320px;
+  position:relative;
+  border-radius:12px;
+  background: linear-gradient(180deg, rgba(245,235,215,0.98), rgba(233,218,186,0.98));
+  box-shadow: 0 18px 60px rgba(10,6,4,0.6), inset 0 1px 0 rgba(255,255,255,0.6);
+  border: 1px solid rgba(200,170,120,0.22);
+  overflow:hidden;
+  transform-origin: center;
+  transition: transform 0.34s ease;
+}
+
+/* Decorative aged edges */
+.envelope::before{
+  content:"";
+  position:absolute; inset:0;
+  border-radius:12px;
+  pointer-events:none;
+  background:
+    linear-gradient(180deg, rgba(0,0,0,0.02), rgba(0,0,0,0.03));
+  mix-blend-mode:multiply;
+}
+
+/* Flap (верхня кришка) */
+.envelope-flap{
+  position:absolute;
+  top:-6px;
+  left:0;
+  width:100%;
+  height:54%;
+  background: linear-gradient(180deg, rgba(225,200,150,0.98), rgba(210,185,140,0.96));
+  transform-origin: top center;
+  transform: rotateX(0deg);
+  border-bottom: 1px solid rgba(170,140,100,0.18);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+  transition: transform 0.9s cubic-bezier(.2,.9,.2,1);
+  z-index:3;
+}
+
+/* Inner content (shifted down so text not on flap line) */
+.envelope-content{
+  position:relative;
+  z-index:4;
+  padding: 86px 28px 22px 28px; /* large top padding to avoid flap */
+  text-align:center;
+  color:#3b2b1b;
+}
+
+/* Title and text in envelope */
+.welcome-title{
+  font-family: var(--hp-font);
+  font-size:28px;
+  margin:0 0 10px 0;
+  color: #6b2b2b;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.3);
+}
+.welcome-text{
+  font-size:15px;
+  line-height:1.45;
+  margin:0 0 16px 0;
+  color:#4a3929;
+}
+
+/* Button styles */
+.big-btn{
+  padding:12px 18px;
+  font-size:17px;
+  border-radius:10px;
+  cursor:pointer;
+  border:none;
+}
+.btn-primary{
+  background: linear-gradient(180deg,#b34b3b,#8a2e2e);
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+  transition: transform .16s ease, box-shadow .16s ease;
+}
+.btn-primary:hover{ transform: translateY(-3px); box-shadow: 0 18px 30px rgba(0,0,0,0.45); }
+
+/* When envelope has class "open" we fold flap back */
+.envelope.open .envelope-flap{
+  transform: rotateX(-120deg);
+  transition: transform 0.9s cubic-bezier(.15,.9,.3,1);
+}
+.envelope.open .envelope-content{
+  opacity:0;
+  transform: translateY(-8px);
+  transition: opacity .5s ease, transform .5s ease;
+}
+
+/* Small seal decoration on flap */
+.envelope-flap::after{
+  content:"";
+  position:absolute;
+  left:50%;
+  transform:translateX(-50%);
+  bottom:18px;
+  width:84px; height:24px;
+  background: linear-gradient(90deg,#8b3a3a,#c44b44);
+  border-radius:6px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+  opacity:0.45;
+}
+
+/* ========== Shared styles for rest of project (quiz etc.) ========== */
+.wrap{
+  position:relative;
+  z-index:2;
+  max-width: 980px;
+  margin: 36px auto;
+  padding: 20px;
+  background: linear-gradient(180deg, rgba(6,6,8,0.86), rgba(10,10,12,0.9));
+  border-radius: 14px;
+  box-shadow: 0 14px 40px rgba(0,0,0,0.7);
+  border: 1px solid rgba(255,0,0,0.05);
+  color: var(--muted);
+}
+
+.header { text-align:center; margin-bottom:12px; }
+#page-title { color: var(--accent); font-size: 28px; margin:0; }
+#page-sub { margin:6px 0 0 0; opacity:0.9; font-size:14px; }
+
+/* Stage and quest box */
+.stage{ min-height: 300px; padding: 12px; display:flex; align-items:center; justify-content:center; }
+.quest-box{
+  width:100%;
+  background: rgba(22,22,24,0.4);
+  border-radius: 12px;
+  padding:18px;
+  border: 1px solid rgba(255,255,255,0.02);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.02);
+  min-height:220px;
+}
+
+/* q-card uses pergarment background for question cards */
+.q-card{
+  width:100%;
+  max-width:760px;
+  background: linear-gradient(180deg, rgba(255,250,240,0.98), rgba(245,238,226,0.98));
+  border-radius: 12px;
+  padding:20px;
+  color:#2b1f15;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+}
+
+/* question text */
+.q-text { font-size:18px; line-height:1.5; margin-bottom:12px; }
+
+/* options */
+.options { display:flex; flex-direction:column; gap:12px; margin-top:8px; }
+.opt-btn{
+  background: linear-gradient(180deg, #7a5c32, #5d4426);
+  color: #fff;
+  padding:12px 14px;
+  border-radius:10px;
+  border:none;
+  cursor:pointer;
+  font-size:16px;
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.opt-btn:hover{ transform: translateY(-4px); box-shadow: 0 14px 30px rgba(0,0,0,0.25); }
+
+/* progress and controls */
+.progress-row{ display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:12px; }
+.progress{ flex:1; height:10px; background: rgba(255,255,255,0.04); border-radius:999px; overflow:hidden; border:1px solid rgba(255,0,0,0.04); }
+.progress > i{ display:block; height:100%; width:0%; background: linear-gradient(90deg,#ffb3b3,#ff5a5a); }
+
+/* result screen */
+.result-wrap{ display:flex; flex-direction:column; align-items:center; gap:12px; text-align:center; }
+.house-logo{ width:160px; height:160px; border-radius:50%; font-size:64px; font-weight:700; color:#111; display:flex; align-items:center; justify-content:center; border:6px solid rgba(255,255,255,0.06); box-shadow: 0 20px 40px rgba(0,0,0,0.45); }
+.house-grif { background: linear-gradient(180deg,#ffb3b3,#ff5a5a); }
+.house-sly { background: linear-gradient(180deg,#b8ffb3,#3abf3a); }
+.house-huf { background: linear-gradient(180deg,#ffe89b,#ffd24a); }
+.house-rav { background: linear-gradient(180deg,#c0e0ff,#6aa8ff); }
+
+.percent-row{ display:flex; gap:10px; margin-top:8px; flex-wrap:wrap; justify-content:center; }
+.percent-item{ min-width:110px; padding:8px 12px; background: rgba(255,255,255,0.02); border-radius:8px; font-size:14px; }
+
+/* actions */
+.action-row{ display:flex; gap:10px; margin-top:10px; }
+.btn-primary{ padding:10px 14px; border-radius:8px; border:none; background:var(--accent); color:#111; font-weight:700; cursor:pointer; }
+.btn-ghost{ padding:8px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.04); color:var(--muted); background:transparent; cursor:pointer; }
+
+/* small screens */
+@media (max-width:600px){
+  .welcome-wrap{ padding:12px; }
+  .envelope{ width:96vw; height:auto; padding-bottom:24px; }
+  .envelope-content{ padding: 86px 16px 20px 16px; }
+  .welcome-title{ font-size:20px; }
+  .welcome-text{ font-size:14px; }
+  .q-card{ padding:14px; }
+  .opt-btn{ font-size:15px; padding:12px; }
+  .house-logo{ width:120px; height:120px; font-size:42px; }
+}
+
+/* animations for question cards */
+.fade-in { animation: fadeIn .28s ease both; }
+.fade-out { animation: fadeOut .18s ease both; }
+@keyframes fadeIn { from { opacity:0; transform: translateY(6px) } to { opacity:1; transform:none } }
+@keyframes fadeOut { from { opacity:1 } to { opacity:0; transform: translateY(-8px) } }

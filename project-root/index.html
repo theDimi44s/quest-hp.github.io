@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Лист із Гоґвортсу</title>
+  <link href="https://fonts.cdnfonts.com/css/harry-potter" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+  <div id="page-bg" aria-hidden="true"></div>
+  
+<div id="magic-candles-container"></div>
+
+  <main class="welcome-wrap" role="main">
+    <div class="envelope" id="envelope">
+      <div class="envelope-flap" id="envelopeFlap"></div>
+
+      <div class="envelope-content" id="envelopeContent">
+        <h1 class="welcome-title">Лист із Гоґвортсу</h1>
+        <button id="btn-open" class="btn-primary big-btn" aria-label="Визначити факультет">
+          Визначити факультет
+        </button>
+        <p class="welcome-text">
+          Тебе зарахували у школу Гоґвортс! Настав час дізнатись, до якого факультету ти належиш.
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <script src="assets/js/welcome.js" type="module"></script>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const bg = document.getElementById('page-bg');
+      if(bg) {
+        const randomNum = Math.random() > 0.5 ? '1' : '2';
+        bg.style.backgroundImage = `url('assets/img/castle-bg${randomNum}.jpg')`;
+      }
+    });
+  </script>
+</body>
+</html>
