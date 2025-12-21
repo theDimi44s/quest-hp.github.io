@@ -16,20 +16,26 @@ const musicManager = {
     currentTrack: null,
     fadeInterval: null,
 
+    stop() {
+        if (this.fadeInterval) clearInterval(this.fadeInterval);
+        this.audio.pause();
+        this.audio.currentTime = 0;
+    },
+
     fadeTo(targetVol, duration, callback) {
         if (!this.audio) { if(callback) callback(); return; }
         if (this.fadeInterval) clearInterval(this.fadeInterval);
 
-        const steps = 10; 
-        const stepTime = duration / steps;
-        
+        const steps = 20; const stepTime = duration / steps;
         this.fadeInterval = setInterval(() => {
-            let newVol = this.audio.volume + (targetVol > this.audio.volume ? 0.1 : -0.1);
-            if (newVol > 1) newVol = 1;
-            if (newVol < 0) newVol = 0;
-            this.audio.volume = newVol;
+            let newVol = this.audio.volume + (targetVol > this.audio.volume ? 0.05 : -0.05);
+            if (newVol > 1) newVol = 1; if (newVol < 0) newVol = 0;
+            
+            // iOS fix check
+            if (Math.abs(this.audio.volume - newVol) > 0.01) this.audio.volume = newVol;
+            else if (Math.abs(this.audio.volume - targetVol) < 0.05) this.audio.volume = targetVol;
 
-            if (Math.abs(this.audio.volume - targetVol) < 0.1 || (targetVol === 0 && newVol === 0)) {
+            if (Math.abs(this.audio.volume - targetVol) < 0.05 || (targetVol === 0 && newVol <= 0.05)) {
                 this.audio.volume = targetVol;
                 clearInterval(this.fadeInterval);
                 if (callback) callback();
@@ -37,40 +43,42 @@ const musicManager = {
         }, stepTime);
     },
     
-    playFadeIn(trackPath, loop = true, maxVolume = 0.5, fadeDuration = 3000) {
-        if(this.currentTrack === trackPath && !this.audio.paused) return;
-
-        this.audio.pause(); this.audio.currentTime = 0;
-        this.audio.src = trackPath; this.audio.loop = loop;
-        this.audio.volume = 0; this.currentTrack = trackPath;
-
+    playAuto(trackPath) {
+        this.audio.src = trackPath;
+        this.audio.loop = true;
+        this.audio.volume = 0; 
+        
         const playPromise = this.audio.play();
         if (playPromise !== undefined) {
-            playPromise.then(() => { this.fadeTo(maxVolume, fadeDuration); }).catch(e => {
-                console.log("Autoplay blocked. Waiting for click.");
-                document.addEventListener('click', () => {
-                    if(this.audio.paused && this.audio.src.includes(trackPath)) {
-                        this.audio.play(); this.fadeTo(maxVolume, 1000); 
-                    }
-                }, { once: true });
+            playPromise.then(() => {
+                this.fadeTo(0.4, 2000);
+            }).catch(e => {
+                console.log("Autoplay blocked. Waiting for interaction.");
+                const unlock = () => {
+                    this.audio.play();
+                    this.fadeTo(0.4, 1000);
+                    document.removeEventListener('click', unlock);
+                    document.removeEventListener('touchstart', unlock);
+                };
+                document.addEventListener('click', unlock);
+                document.addEventListener('touchstart', unlock);
             });
         }
     },
 
-    stopFadeOut(duration = 1000, onComplete) {
-        this.fadeTo(0, duration);
-        setTimeout(() => {
-            if (this.fadeInterval) clearInterval(this.fadeInterval);
-            this.audio.pause(); this.audio.currentTime = 0;
-            if (onComplete) onComplete();
-        }, duration + 50); 
+    stopFadeOut(duration = 2000) {
+        this.fadeTo(0, duration, () => {
+            this.audio.pause();
+        });
     }
 };
 
 const audioFiles = {
-  A: 'assets/audio/gryffindor.mp3', B: 'assets/audio/slytherin.mp3',
-  C: 'assets/audio/hufflepuff.mp3', D: 'assets/audio/ravenclaw.mp3',
-  bgGame: 'assets/audio/answer-page.mp3', bgSuccess: 'assets/audio/success.mp3'
+  A: 'assets/audio/gryffindor.mp3', 
+  B: 'assets/audio/slytherin.mp3',
+  C: 'assets/audio/hufflepuff.mp3', 
+  D: 'assets/audio/ravenclaw.mp3',
+  bgGame: 'assets/audio/answer-page.mp3' // Повернули answer-page.mp3
 };
 
 const houses = { A: 'Грифіндор', B: 'Слизерин', C: 'Гафелпаф', D: 'Рейвенклов' };
@@ -93,7 +101,9 @@ function shuffleArray(array) {
 // === ЗАВАНТАЖЕННЯ ===
 async function loadQuest(id){
   try {
-    setTimeout(() => { musicManager.playFadeIn(audioFiles.bgGame, true, 0.4, 3000); }, 1000);
+    // Автозапуск answer-page.mp3
+    musicManager.playAuto(audioFiles.bgGame);
+
     const resp = await fetch(`quests/${id}.json?v=${Math.random()}`);
     if(!resp.ok) throw new Error(`Error ${resp.status}`);
     questData = await resp.json();
@@ -107,13 +117,13 @@ async function loadQuest(id){
 
 // === 1. ВІКТОРИНА ===
 function startQuiz() {
+    questEl.classList.remove('puzzle-active');
     keys = Object.keys(questData.questions || {});
     score = { A:0, B:0, C:0, D:0 }; 
     if(subEl) subEl.textContent = "Дай чесні відповіді";
     renderQuestion(0);
 }
 
-// === ВІДОБРАЖЕННЯ ПИТАННЯ (ОЧИЩЕНО ВІД АНІМАЦІЇ) ===
 function renderQuestion(index){
   if(index >= keys.length) { 
       let winner = 'A';
@@ -130,29 +140,15 @@ function renderQuestion(index){
   questEl.innerHTML = '';
   
   const card = document.createElement('div'); card.className = 'q-card fade-in';
-  
-  // Текст питання
-  const qText = document.createElement('div'); 
-  qText.className = 'q-text'; 
-  qText.textContent = q.text; 
+  const qText = document.createElement('div'); qText.className = 'q-text'; qText.textContent = q.text; 
   card.appendChild(qText);
 
-  // КАРТИНКА (Твій код)
   const img = document.createElement('img');
   img.className = 'q-image';
   img.alt = q.imageAlt || q.text || 'question image';
-  // Перевірка: якщо є картинка в JSON - беремо її, інакше заглушка
   img.src = q.image ? q.image : 'assets/img/library.png';
-  
-  // Стилі для картинки (можна перенести в CSS)
-  img.style.width = '100%';
-  img.style.height = '180px';
-  img.style.objectFit = 'cover';
-  img.style.borderRadius = '8px';
-  img.style.marginBottom = '12px';
   card.appendChild(img);
   
-// Варіанти відповідей
   const opts = document.createElement('div'); opts.className = 'options';
   let shuffledOptions = [...q.options]; shuffleArray(shuffledOptions);
   
@@ -161,15 +157,10 @@ function renderQuestion(index){
     b.className = 'opt-btn'; 
     b.textContent = opt.text; 
 
-    // === ДИНАМІЧНИЙ РОЗМІР ШРИФТУ ===
     const len = opt.text.length;
-    if (len > 60) {
-        b.classList.add('text-sm'); // Довгий текст -> малий шрифт
-    } else if (len > 25) {
-        b.classList.add('text-md'); // Середній текст -> середній шрифт
-    }
-    // Якщо менше 25 символів -> залишається стандартний (великий) шрифт
-    // ================================
+    if (len <= 30) b.classList.add('text-lg'); 
+    else if (len > 30 && len <= 70) b.classList.add('text-md');
+    else b.classList.add('text-sm');
 
     b.onclick = () => { 
         if(score[opt.value] !== undefined) score[opt.value]++; 
@@ -177,7 +168,6 @@ function renderQuestion(index){
     };
     opts.appendChild(b);
   });
-  
   card.appendChild(opts);
   
   const counter = document.createElement('div'); counter.style.marginTop = '15px'; counter.style.fontSize = '14px'; counter.style.opacity = '0.5'; counter.style.fontWeight = '700'; counter.textContent = `Питання ${index + 1} / ${keys.length}`; card.appendChild(counter);
@@ -197,23 +187,38 @@ function startSpellTask(winner) {
 // === 3. ПАЗЛ ===
 function startPuzzleTask(winner) {
     if(progressBar) progressBar.style.width = '60%'; 
-    if (typeof startPuzzle !== 'function') { alert("Err: startPuzzle"); return; }
-    startPuzzle(questEl, () => { showPermissionScreen(winner); });
+    questEl.classList.add('puzzle-active');
+    startPuzzle(questEl, () => { 
+        questEl.classList.remove('puzzle-active');
+        showPermissionScreen(winner); 
+    });
 }
 
-// === 4. КУЛЯ ===
+// === 4. КУЛЯ (Оновлено: додано 4-й аргумент для затухання музики) ===
 function startOrbTask(winner) {
     if(progressBar) progressBar.style.width = '85%';
-    startOrb(questEl, winner, () => {
-        musicManager.stopFadeOut(1000, () => { renderResult(winner); });
-    });
+    startOrb(
+        questEl, 
+        winner, 
+        () => { // onComplete (через 6 сек)
+            renderResult(winner); 
+        },
+        () => { // onSuccess (одразу після тряски)
+            musicManager.stopFadeOut(3000); // Починаємо глушити музику поки йде текст
+        }
+    );
 }
 
 // === ЕКРАН ДОЗВОЛУ ===
 function showPermissionScreen(winner) {
+    questEl.classList.remove('puzzle-active');
     if(subEl) subEl.textContent = "Налаштування магії";
     questEl.innerHTML = '';
-    const card = document.createElement('div'); card.className = 'q-card fade-in'; card.style.textAlign = 'center';
+    
+    const card = document.createElement('div'); 
+    card.className = 'q-card fade-in permission-card'; 
+    card.style.textAlign = 'center';
+    
     const h2 = document.createElement('h2'); h2.textContent = "Зал Пророцтв"; h2.style.marginBottom = '20px'; h2.style.fontSize = '24px';
     const p = document.createElement('p'); p.style.fontWeight = '700'; p.style.fontSize = '16px';
     p.textContent = `Зал Пророцтв — одна з восьми відомих кімнат Відділу Таємниць. У вічному напівмороку мерехтять безліч скляних кульок...`; 
@@ -227,18 +232,16 @@ function showPermissionScreen(winner) {
     card.appendChild(h2); card.appendChild(p); card.appendChild(btn); questEl.appendChild(card);
 }
 
-// === 5. РЕЗУЛЬТАТ ===
+// === 5. РЕЗУЛЬТАТ (Без success.mp3, тільки голос) ===
 function renderResult(winner){
   if(progressBar) progressBar.style.width = '100%';
   if(subEl) subEl.textContent = "Розподіл завершено";
   
-  const successAudio = new Audio(audioFiles.bgSuccess);
-  successAudio.volume = 0.7; successAudio.play().catch(e=>{});
+  // Гарантована тиша перед голосом
+  musicManager.stop();
 
-  setTimeout(() => {
-      let vol = successAudio.volume; successAudio.volume = 0.3; 
-      playHouseAudio(winner, () => { successAudio.volume = vol; });
-  }, 2500);
+  // Одразу граємо голос
+  playHouseAudio(winner);
 
   questEl.innerHTML = '';
   const wrap = document.createElement('div'); wrap.className = 'result-wrap fade-in';
@@ -258,21 +261,18 @@ function renderResult(winner){
 
   const actions = document.createElement('div'); actions.className = 'action-row';
   const playBtn = document.createElement('button'); playBtn.className = 'btn-primary'; playBtn.textContent = 'Прослухати ще раз';
-  playBtn.onclick = () => { successAudio.volume = 0.2; playHouseAudio(winner, () => { successAudio.volume = 0.7; }); };
- 
-  // Перехід на головну замість перезавантаження сторінки
-  // const restartBtn = document.createElement('button'); restartBtn.className = 'btn-primary'; restartBtn.textContent = 'Пройти знову'; restartBtn.style.marginLeft = '10px'; restartBtn.onclick = () => location.reload();
-  // actions.appendChild(restartBtn);
+  playBtn.onclick = () => { playHouseAudio(winner); };
+  
   actions.appendChild(playBtn); 
   textDiv.appendChild(actions); wrap.appendChild(textDiv); questEl.appendChild(wrap);
   document.body.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('${houseBackgrounds[winner]}')`;
 }
 
 let houseAudio = new Audio();
-function playHouseAudio(code, onEndCallback){
+function playHouseAudio(code){
   const src = audioFiles[code]; if(!src) return;
-  houseAudio.pause(); houseAudio = new Audio(src); houseAudio.volume = 1.0; houseAudio.play().catch(e=>{});
-  houseAudio.onended = () => { if(onEndCallback) onEndCallback(); };
+  houseAudio.pause(); houseAudio = new Audio(src); houseAudio.volume = 1.0; 
+  houseAudio.play().catch(e => console.log("Voice blocked"));
 }
 
 document.addEventListener('DOMContentLoaded', () => {

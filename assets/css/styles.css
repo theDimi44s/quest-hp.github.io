@@ -220,85 +220,107 @@ button {
 @keyframes popIn { from {opacity:0; transform:scale(0.9);} to {opacity:1; transform:scale(1);} }
 
 .q-text { 
-    font-size: 20px; /* Трохи менший шрифт питання */
-    margin-bottom: 15px; 
-    line-height: 1.3; 
+    font-size: 20px; 
+    margin-bottom: 12px; /* Трішки зменшив відступ до картинки */
+    line-height: 1.4; /* Збільшив міжрядковий інтервал, щоб літери не налипали */
     font-weight: 600;
+    text-align: center; 
+    width: 100%;
+    
+    /* ВИПРАВЛЕННЯ ОБРІЗАННЯ */
+    padding-top: 5px; /* Даємо простір для верхівок літер */
+    display: block;
 }
+
 .options { display: flex; flex-direction: column; gap: 8px; width: 100%; }
 
-/* --- КНОПКИ ВІКТОРИНИ (ДИНАМІЧНИЙ РОЗМІР) --- */
+/* --- КНОПКИ ВІКТОРИНИ (Оновлені) --- */
 .opt-btn { 
     background: #8333af; 
     color: #fff; 
     border-radius: 4px; 
     border: 1px solid #3e2b16;
     
-    /* Десктоп (Комп'ютер) */
-    font-size: 20px; 
+    /* Десктоп: Базовий розмір */
+    font-size: 22px; 
     padding: 15px 10px;
     
-    line-height: 1.2; /* Трішки збільшив інтервал для читабельності */
+    line-height: 1.2; 
     width: 100%; 
-    white-space: normal; 
-    text-align: center;
-    word-wrap: break-word; 
-    height: auto; 
-    min-height: 50px; 
     
-    /* Забираємо transition для background, щоб він не "моргав" при зміні питання */
-    transition: transform 0.1s; 
+    /* Центрування тексту */
     display: flex;
     align-items: center;
     justify-content: center;
+    text-align: center; /* Горизонтальне центрування тексту */
     
-    /* Забираємо стандартне підсвічування на мобільних (синій квадрат) */
+    white-space: normal; 
+    word-wrap: break-word; 
+    height: auto; 
+    min-height: 60px; /* Збільшили висоту для зручності */
+    
+    transition: transform 0.1s; 
     -webkit-tap-highlight-color: transparent;
 }
 
-/* --- ВИПРАВЛЕННЯ ЗАЛИПАННЯ (HOVER FIX) --- */
-/* Ефект наведення працює ТІЛЬКИ якщо пристрій підтримує ховер (мишка) */
-@media (hover: hover) {
-    .opt-btn:hover { 
-        background: #4c1e67; 
-    }
+@media (hover: hover) { .opt-btn:hover { background: #4c1e67; } }
+.opt-btn:active { transform: scale(0.96); background: #4c1e67; }
+
+/* === ЯВНІ РОЗМІРИ ШРИФТІВ === */
+
+/* Великий текст (для коротких фраз) */
+.opt-btn.text-lg { 
+    font-size: 24px; 
+    /* font-weight: bold; /* Жирніший для коротких */
 }
 
-/* Ефект натискання (працює і на телефоні, і на ПК) */
-.opt-btn:active { 
-    transform: scale(0.96); 
-    background: #4c1e67; /* Темніє в момент дотику */
-}
-
-/* --- РОЗМІРИ ШРИФТІВ --- */
 /* Середній текст */
-.opt-btn.text-md {
-    font-size: 17px; /* Було 16 */
+.opt-btn.text-md { 
+    font-size: 19px; 
     padding: 12px 10px;
 }
+
 /* Довгий текст */
-.opt-btn.text-sm {
-    font-size: 15px; /* Було 14 */
-    padding: 10px 8px;
+.opt-btn.text-sm { 
+    font-size: 16px; 
+    padding: 10px 8px; 
+    line-height: 1.3;
 }
 
 /* --- АДАПТИВ (ТЕЛЕФОНИ) --- */
 @media (max-width: 500px) {
-    /* Тут були завеликі значення (22px). 
-       Робимо їх меншими, щоб текст виглядав акуратно і влазив.
-    */
-    .opt-btn { 
-        font-size: 24px; /* Оптимально для коротких відповідей */
-        min-height: 55px; /* Зручніше натискати пальцем */
-    }       
-    .opt-btn.text-md { font-size: 18px; } 
-    .opt-btn.text-sm { font-size: 16px; } 
+    /* На мобільному шрифт має бути ЩЕ БІЛЬШИМ для Lumos */
     
-    /* Зменшуємо відступи контейнера вікторини, щоб більше влізло */
-    .q-card { padding: 10px; }
+    /* Короткі відповіді (як на скріншоті) будуть величезними */
+    .opt-btn.text-lg { 
+        font-size: 21px; 
+    } 
+    
+    /* Середні */
+    .opt-btn.text-md { 
+        font-size: 20px; 
+    } 
+    
+    /* Довгі - щоб влазили */
+    .opt-btn.text-sm { 
+        font-size: 16px; 
+    }
+    
+    .q-card { padding: 15px 10px; }
 }
 
 /* NAV-BAR */
+
+/* КАРТИНКА ПИТАННЯ (Базовий стиль) */
+.q-image {
+    width: 100%;
+    height: 180px; /* Висота для ПК */
+    object-fit: cover;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    display: block;
+}
+
 .nav-controls {
     display: flex; justify-content: center; gap: 20px; 
     margin-top: 25px; width: 100%; max-width: 500px; z-index: 10;
@@ -441,15 +463,130 @@ canvas { position: relative; z-index: 10; }
 
 #quest .result-text-container { position: relative; z-index: 20; margin-top: 5px; padding: 0 10px; }
 
-/* АДАПТИВ */
+/* --- АДАПТИВ (ТЕЛЕФОНИ - КОМПАКТНИЙ РЕЖИМ) --- */
 @media (max-width: 500px) {
-    #quest .crests-container { gap: 5px; align-items: flex-end; }
-    #quest .crest-main { width: 32vw; max-width: 140px; }
-    #quest .crest-side { width: 25vw; max-width: 110px; }
-    .welcome-title { font-size: 28px; }
-    .game-title { font-size: 2rem; margin-top: 80px; }
     
-    /* Ще менший шрифт для кнопок на дуже малих екранах */
-    .opt-btn { font-size: 14px; padding: 10px 8px; }
-    .q-text { font-size: 18px; }
+    /* 1. Стискаємо контейнер, щоб все влізло без скролу */
+    .quest-wrap {
+        justify-content: flex-start; /* Тягнемо все вгору */
+        padding-top: 10px;
+    }
+
+    /* 2. Зменшуємо картинку ще сильніше */
+    /* Вона декоративна, текст важливіший */
+    .q-image {
+        height: 200px !important; /* Було 140px */
+        margin-bottom: 8px;
+    }
+
+    /* 3. Текст питання компактніший */
+    .q-text {
+        font-size: 19px;
+        margin-bottom: 10px;
+        line-height: 1.2;
+    }
+    
+    .q-card {
+        padding: 10px 8px;
+        width: 100%;
+        max-width: 96%;
+    }
+
+    .options {
+        gap: 6px; /* Менша відстань між кнопками */
+    }
+
+    /* 4. НАЛАШТУВАННЯ КНОПОК (Щоб не обрізало текст) */
+    .opt-btn { 
+        /* Збільшуємо line-height, щоб хвостики літер (ї, щ, у, р) не різались */
+        line-height: 1.35; 
+        
+        /* Компенсуємо це меншими відступами всередині */
+        padding: 6px 4px; 
+        
+        min-height: 48px; /* Мінімальна висота */
+    }       
+
+    /* 5. Шрифти (Збалансовані для Lumos) */
+    /* Великий (для коротких фраз в один рядок) */
+    .opt-btn.text-lg { 
+        font-size: 20px; 
+        padding-top: 8px; /* Трохи опускаємо текст візуально */
+    } 
+    
+    /* Середній */
+    .opt-btn.text-md { 
+        font-size: 18px; 
+    } 
+    
+    /* Довгий */
+    .opt-btn.text-sm { 
+        font-size: 15px; 
+        line-height: 1.2; /* Для довгих текстів щільніше */
+    } 
+    
+    /* 6. Кнопки навігації (внизу) */
+    .nav-controls {
+        margin-top: 10px;
+        margin-bottom: 5px;
+        gap: 8px;
+    }
+    
+    .nav-btn {
+        font-size: 14px;
+        padding: 10px 0;
+        width: 48%; 
+    }
+}
+
+/* ФІКС ДЛЯ МАЛЕНЬКИХ ЕКРАНІВ (iPhone SE, старі моделі) */
+@media (max-height: 600px) {
+    .q-image { display: none; } /* Якщо екран дуже низький - ховаємо картинку взагалі */
+    .game-title { margin-top: 40px; font-size: 2rem; }
+}
+
+/* === СПЕЦІАЛЬНИЙ КЛАС ДЛЯ ПАЗЛА === */
+/* Коли цей клас додається до main#quest, він піднімає весь контент вгору */
+.quest-wrap.puzzle-active {
+    justify-content: flex-start !important;
+    padding-top: 40px !important; /* Відступ від верху, щоб не прилипало до стелі */
+}
+
+/* Для телефонів піднімаємо ще вище */
+@media (max-width: 500px) {
+    .quest-wrap.puzzle-active {
+        padding-top: 20px !important;
+    }
+    
+    /* Зменшуємо заголовок саме для пазла, щоб звільнити місце */
+    .quest-wrap.puzzle-active .game-title {
+        font-size: 1.8rem;
+        margin-top: 10px;
+        margin-bottom: 10px;
+    }
+    
+    .quest-wrap.puzzle-active .game-instruction {
+        margin-bottom: 10px;
+        font-size: 1.2rem;
+    }
+}
+
+/* === ФІКС ДЛЯ ЦЕНТРУВАННЯ "ЗАЛУ ПРОРОЦТВ" === */
+/* Цей клас ми додали в JS (showPermissionScreen) */
+.permission-card {
+    position: absolute !important; /* Вириваємо з потоку flex */
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    margin: 0 !important;
+    width: 90%;
+    max-width: 400px;
+    z-index: 100;
+}
+
+/* Для телефонів - переконаємось, що не вилазить */
+@media (max-width: 500px) {
+    .permission-card {
+        top: 45% !important; /* Трішки вище середини, щоб не перекривало кнопки браузера */
+    }
 }
