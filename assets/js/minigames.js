@@ -1,13 +1,11 @@
 // assets/js/minigames.js
 
-// Функція для створення невидимої кнопки пропуску
 function addCheatButton(container, onComplete) {
     const cheatBtn = document.createElement('div');
     cheatBtn.style.cssText = 'position:fixed;top:0;left:0;width:20px;height:20px;z-index:99999;cursor:pointer;';
-    
     cheatBtn.onclick = (e) => {
         e.stopPropagation(); 
-        console.log("DEV: Рівень пропущено (Hidden Button)");
+        console.log("DEV: Рівень пропущено");
         if (onComplete) onComplete();
     };
     container.appendChild(cheatBtn);
@@ -20,18 +18,14 @@ export function startPuzzle(container, onComplete) {
 
     const h1 = document.createElement('h1'); h1.className = 'game-title'; h1.textContent = 'Віднови Замок';
     const p = document.createElement('p'); p.className = 'game-instruction'; p.textContent = 'Збери пазл';
- 
     const puzzleOptions = ['assets/img/hippo.png', 'assets/img/library.png'];
     const imageSrc = puzzleOptions[Math.floor(Math.random() * puzzleOptions.length)];
-
     const refContainer = document.createElement('div'); refContainer.className = 'reference-container';
     const refImg = document.createElement('img'); refImg.src = imageSrc; refImg.className = 'reference-img';
     refContainer.appendChild(refImg);
-
     const board = document.createElement('div'); board.className = 'puzzle-board';
     const guide = document.createElement('div'); guide.className = 'puzzle-guide';
     board.appendChild(guide);
-    
     container.appendChild(h1); container.appendChild(p); container.appendChild(refContainer); container.appendChild(board);
 
     const rows = 3; const cols = 4; const pieceSize = 80; 
@@ -131,7 +125,7 @@ export function startPuzzle(container, onComplete) {
     }
 }
 
-// 2. КУЛЯ (ВИПРАВЛЕНО: Куля стоїть на місці, немає випадкових пропусків)
+// 2. КУЛЯ (ВИПРАВЛЕНО: Куля стоїть на місці)
 export function startOrb(container, winner, onComplete, onSuccess) {
     container.innerHTML = `
         <h2 class="game-title">Зал Пророцтв</h2>
@@ -174,8 +168,6 @@ export function startOrb(container, winner, onComplete, onSuccess) {
         }, 1500); 
 
         cleanup(); 
-        // Тут стоїть затримка 6 секунд, тому звук точно не повинен грати одразу, 
-        // якщо не було випадкового кліку
         setTimeout(() => { if(onComplete) onComplete(); }, 6000);
     }
 
@@ -183,9 +175,8 @@ export function startOrb(container, winner, onComplete, onSuccess) {
         if(isCompleted) return;
         const acc = event.accelerationIncludingGravity; if (!acc) return;
         
-        // --- РЯДОК ЗМІЩЕННЯ ВИДАЛЕНО ---
-        // Куля тепер не рухається при нахилі, тільки дим всередині реагує (через CSS анімацію)
-
+        // --- ВИДАЛЕНО РЯДОК ЗМІЩЕННЯ (ball.style.transform) ---
+        
         if (lastX !== null) {
             if ((Math.abs(acc.x-lastX) + Math.abs(acc.y-lastY) + Math.abs(acc.z-lastZ)) > shakeThreshold) triggerSuccess();
         }

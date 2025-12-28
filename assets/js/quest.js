@@ -55,7 +55,7 @@ function shuffleArray(array) {
   return array;
 }
 
-// === LOAD QUEST ===
+// === ЗАВАНТАЖЕННЯ ===
 async function loadQuest(id){
   try {
     musicManager.playAuto(audioFiles.bgGame);
@@ -127,7 +127,7 @@ function startOrbTask(winner) {
         () => { 
             // 1. Зупиняємо фонову музику
             musicManager.stopFadeOut(2000); 
-            // 2. ВАЖЛИВО: Розблокуємо аудіо капелюха прямо зараз (під час кліку/тряски)
+            // 2. ВАЖЛИВО: Розблокуємо аудіо капелюха прямо зараз
             primeAudio(winner);
         }
     ); 
@@ -158,7 +158,6 @@ function renderResult(winner){
   title.style.margin = '20px 0'; title.style.fontSize = '29px'; title.style.color = '#fff'; title.style.textShadow = '0 0 10px rgba(0,0,0,0.8)'; textDiv.appendChild(title);
   const actions = document.createElement('div'); actions.className = 'action-row';
   
-  // ВИПРАВЛЕНО: Клас кнопки
   const playBtn = document.createElement('button'); playBtn.className = 'btn-result'; playBtn.textContent = 'Прослухати ще раз';
   playBtn.onclick = () => { playHouseAudio(winner); };
   actions.appendChild(playBtn); textDiv.appendChild(actions); wrap.appendChild(textDiv); questEl.appendChild(wrap);
@@ -166,23 +165,32 @@ function renderResult(winner){
 }
 
 let houseAudio = new Audio();
+// Короткий файл тиші (0.1сек)
+const silentMp3 = "data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAEAAABIADAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMD//////////////////////////////////////////////////////////////////wAAAAA=";
 
-// Функція для "прогріву" аудіо
+// Функція "прогріву" через тишу
 function primeAudio(code) {
-    const src = audioFiles[code];
-    if (!src) return;
-    houseAudio.src = src;
-    houseAudio.volume = 0;
-    // Запускаємо і одразу ставимо на паузу, щоб браузер "дозволив" його пізніше
+    const realSrc = audioFiles[code];
+    if (!realSrc) return;
+    
+    // 1. Граємо тишу
+    houseAudio.src = silentMp3;
+    houseAudio.volume = 1.0; 
+    
     houseAudio.play().then(() => {
+        // 2. Якщо вдалося (браузер дав дозвіл) -> ставимо на паузу
         houseAudio.pause();
-        houseAudio.currentTime = 0;
-        houseAudio.volume = 1.0;
-    }).catch(e => console.log("Audio unlock failed", e));
+        // 3. Підміняємо на реальний трек (він буде готовий до запуску пізніше)
+        houseAudio.src = realSrc;
+        houseAudio.load();
+    }).catch(e => {
+        // Якщо не вийшло, все одно ставимо src, щоб кнопка "Прослухати ще раз" спрацювала
+        houseAudio.src = realSrc;
+    });
 }
 
 function playHouseAudio(code){
-    // Тут ми просто викликаємо play, бо аудіо вже "прогріте"
+    // Просто граємо (аудіо вже має правильний src з primeAudio)
     houseAudio.play().catch(e => console.log("Voice blocked", e));
 }
 
