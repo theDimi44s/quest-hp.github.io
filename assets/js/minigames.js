@@ -1,11 +1,9 @@
 // assets/js/minigames.js
 
-// Функція для створення невидимої кнопки пропуску (щоб не дублювати код)
+// Функція для створення невидимої кнопки пропуску
 function addCheatButton(container, onComplete) {
     const cheatBtn = document.createElement('div');
     cheatBtn.style.cssText = 'position:fixed;top:0;left:0;width:20px;height:20px;z-index:99999;cursor:pointer;';
-    // Для зручності тестів можна тимчасово розкоментувати фон, щоб бачити де вона:
-    // cheatBtn.style.backgroundColor = 'rgba(255, 0, 0, 0.3)'; 
     
     cheatBtn.onclick = (e) => {
         e.stopPropagation(); 
@@ -18,8 +16,6 @@ function addCheatButton(container, onComplete) {
 // 1. ПАЗЛ
 export function startPuzzle(container, onComplete) {
     container.innerHTML = '';
-    
-    // Додаємо кнопку пропуску
     addCheatButton(container, onComplete);
 
     const h1 = document.createElement('h1'); h1.className = 'game-title'; h1.textContent = 'Віднови Замок';
@@ -135,7 +131,7 @@ export function startPuzzle(container, onComplete) {
     }
 }
 
-// 2. КУЛЯ (Оновлено: додано кнопку пропуску)
+// 2. КУЛЯ (ВИПРАВЛЕНО: Куля тепер стоїть на місці)
 export function startOrb(container, winner, onComplete, onSuccess) {
     container.innerHTML = `
         <h2 class="game-title">Зал Пророцтв</h2>
@@ -146,11 +142,7 @@ export function startOrb(container, winner, onComplete, onSuccess) {
         </div>
     `;
 
-    // Додаємо кнопку пропуску
-    addCheatButton(container, () => {
-        // Якщо пропускаємо через чіт - імітуємо успішне завершення з усіма ефектами
-        triggerSuccess();
-    });
+    addCheatButton(container, () => { triggerSuccess(); });
 
     const colorLayer = document.getElementById('orb-color');
     const instruction = document.getElementById('orb-instruction');
@@ -181,16 +173,18 @@ export function startOrb(container, winner, onComplete, onSuccess) {
             hintDiv.style.display = 'block'; hintDiv.style.opacity = '1';
         }, 1500); 
 
-        // Прибираємо слухачів руху
         cleanup(); 
-        
         setTimeout(() => { if(onComplete) onComplete(); }, 6000);
     }
 
     function handleMotion(event) {
         if(isCompleted) return;
         const acc = event.accelerationIncludingGravity; if (!acc) return;
-        ball.style.transform = `translate(${(acc.x||0)*2}px, ${(acc.y||0)*2}px)`;
+        
+        // --- ВИДАЛЕНО РЯДОК ЗМІЩЕННЯ КУЛІ ---
+        // ball.style.transform = ... (Видалено)
+        // ------------------------------------
+
         if (lastX !== null) {
             if ((Math.abs(acc.x-lastX) + Math.abs(acc.y-lastY) + Math.abs(acc.z-lastZ)) > shakeThreshold) triggerSuccess();
         }
@@ -208,7 +202,7 @@ export function startOrb(container, winner, onComplete, onSuccess) {
     function cleanup() { window.removeEventListener('devicemotion', handleMotion, true); }
 }
 
-// 3. ЗАКЛЯТТЯ (Оновлено: додано кнопку пропуску)
+// 3. ЗАКЛЯТТЯ (Без змін)
 export function startSpell(container, onComplete) {
     container.innerHTML = `
         <h2 class="game-title">Відкрий Двері</h2>
@@ -217,7 +211,6 @@ export function startSpell(container, onComplete) {
         <div id="spell-msg" style="height:20px; margin-top:10px; color: #ffd700; font-weight: bold; text-align:center;"></div>
     `;
     
-    // Додаємо кнопку пропуску
     addCheatButton(container, onComplete);
 
     const canvas = document.getElementById('spell-canvas'); const ctx = canvas.getContext('2d');
