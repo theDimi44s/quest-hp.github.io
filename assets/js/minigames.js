@@ -1,12 +1,26 @@
 // assets/js/minigames.js
 
-// 1. ПАЗЛ (Без змін)
+// Функція для створення невидимої кнопки пропуску (щоб не дублювати код)
+function addCheatButton(container, onComplete) {
+    const cheatBtn = document.createElement('div');
+    cheatBtn.style.cssText = 'position:fixed;top:0;left:0;width:20px;height:20px;z-index:99999;cursor:pointer;';
+    // Для зручності тестів можна тимчасово розкоментувати фон, щоб бачити де вона:
+    // cheatBtn.style.backgroundColor = 'rgba(255, 0, 0, 0.3)'; 
+    
+    cheatBtn.onclick = (e) => {
+        e.stopPropagation(); 
+        console.log("DEV: Рівень пропущено (Hidden Button)");
+        if (onComplete) onComplete();
+    };
+    container.appendChild(cheatBtn);
+}
+
+// 1. ПАЗЛ
 export function startPuzzle(container, onComplete) {
     container.innerHTML = '';
-    const cheatBtn = document.createElement('div');
-    cheatBtn.style.cssText = 'position:fixed;top:0;left:0;width:10px;height:10px;z-index:10000;cursor:default;';
-    cheatBtn.onclick = (e) => { e.stopPropagation(); if (onComplete) onComplete(); };
-    container.appendChild(cheatBtn);
+    
+    // Додаємо кнопку пропуску
+    addCheatButton(container, onComplete);
 
     const h1 = document.createElement('h1'); h1.className = 'game-title'; h1.textContent = 'Віднови Замок';
     const p = document.createElement('p'); p.className = 'game-instruction'; p.textContent = 'Збери пазл';
@@ -121,7 +135,7 @@ export function startPuzzle(container, onComplete) {
     }
 }
 
-// 2. КУЛЯ (ВИПРАВЛЕНО: Миттєве видалення старого тексту + фікс кнопки)
+// 2. КУЛЯ (Оновлено: додано кнопку пропуску)
 export function startOrb(container, winner, onComplete, onSuccess) {
     container.innerHTML = `
         <h2 class="game-title">Зал Пророцтв</h2>
@@ -132,8 +146,11 @@ export function startOrb(container, winner, onComplete, onSuccess) {
         </div>
     `;
 
-    const title = container.querySelector('.game-title');
-    if(title) title.onclick = () => { cleanup(); if(onComplete) onComplete(); };
+    // Додаємо кнопку пропуску
+    addCheatButton(container, () => {
+        // Якщо пропускаємо через чіт - імітуємо успішне завершення з усіма ефектами
+        triggerSuccess();
+    });
 
     const colorLayer = document.getElementById('orb-color');
     const instruction = document.getElementById('orb-instruction');
@@ -150,25 +167,23 @@ export function startOrb(container, winner, onComplete, onSuccess) {
         if(isCompleted) return; isCompleted = true;
         if(navigator.vibrate) navigator.vibrate(200);
         
-        // 1. МИТТЄВО ХОВАЄМО СТАРЕ
-        if(manualBtn) manualBtn.style.display = 'none'; // Кнопка зникає фізично
-        hintDiv.textContent = ''; // Текст зникає, щоб не було накладання
+        if(manualBtn) manualBtn.style.display = 'none';
+        hintDiv.textContent = ''; 
         hintDiv.style.opacity = '0';
         
         colorLayer.style.opacity = '1'; 
         instruction.textContent = "Доля визначена...";
         
-        // Викликаємо колбек (тут буде прогрів аудіо)
         if(onSuccess) onSuccess();
 
-        // 2. ПОКАЗУЄМО НОВЕ
         setTimeout(() => {
             hintDiv.innerHTML = '<span style="color: #ffd700; font-size: 18px; font-weight: bold; text-shadow: 0 0 10px rgba(0,0,0,0.8);">Мені здається, ми обрали тобі факультет!</span>';
-            hintDiv.style.display = 'block'; 
-            hintDiv.style.opacity = '1';
+            hintDiv.style.display = 'block'; hintDiv.style.opacity = '1';
         }, 1500); 
 
+        // Прибираємо слухачів руху
         cleanup(); 
+        
         setTimeout(() => { if(onComplete) onComplete(); }, 6000);
     }
 
@@ -193,7 +208,7 @@ export function startOrb(container, winner, onComplete, onSuccess) {
     function cleanup() { window.removeEventListener('devicemotion', handleMotion, true); }
 }
 
-// 3. ЗАКЛЯТТЯ (Без змін)
+// 3. ЗАКЛЯТТЯ (Оновлено: додано кнопку пропуску)
 export function startSpell(container, onComplete) {
     container.innerHTML = `
         <h2 class="game-title">Відкрий Двері</h2>
@@ -201,8 +216,10 @@ export function startSpell(container, onComplete) {
         <div class="spell-area"><canvas id="spell-canvas" width="300" height="350"></canvas></div>
         <div id="spell-msg" style="height:20px; margin-top:10px; color: #ffd700; font-weight: bold; text-align:center;"></div>
     `;
-    const title = container.querySelector('.game-title');
-    title.onclick = () => { if(onComplete) onComplete(); };
+    
+    // Додаємо кнопку пропуску
+    addCheatButton(container, onComplete);
+
     const canvas = document.getElementById('spell-canvas'); const ctx = canvas.getContext('2d');
     let isDrawing = false; let checkpoints = []; let passedCheckpoints = new Set(); 
 
