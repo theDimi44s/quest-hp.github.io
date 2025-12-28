@@ -131,7 +131,7 @@ export function startPuzzle(container, onComplete) {
     }
 }
 
-// 2. КУЛЯ (ВИПРАВЛЕНО: Куля тепер стоїть на місці)
+// 2. КУЛЯ (ВИПРАВЛЕНО: Куля стоїть на місці, немає випадкових пропусків)
 export function startOrb(container, winner, onComplete, onSuccess) {
     container.innerHTML = `
         <h2 class="game-title">Зал Пророцтв</h2>
@@ -174,6 +174,8 @@ export function startOrb(container, winner, onComplete, onSuccess) {
         }, 1500); 
 
         cleanup(); 
+        // Тут стоїть затримка 6 секунд, тому звук точно не повинен грати одразу, 
+        // якщо не було випадкового кліку
         setTimeout(() => { if(onComplete) onComplete(); }, 6000);
     }
 
@@ -181,9 +183,8 @@ export function startOrb(container, winner, onComplete, onSuccess) {
         if(isCompleted) return;
         const acc = event.accelerationIncludingGravity; if (!acc) return;
         
-        // --- ВИДАЛЕНО РЯДОК ЗМІЩЕННЯ КУЛІ ---
-        // ball.style.transform = ... (Видалено)
-        // ------------------------------------
+        // --- РЯДОК ЗМІЩЕННЯ ВИДАЛЕНО ---
+        // Куля тепер не рухається при нахилі, тільки дим всередині реагує (через CSS анімацію)
 
         if (lastX !== null) {
             if ((Math.abs(acc.x-lastX) + Math.abs(acc.y-lastY) + Math.abs(acc.z-lastZ)) > shakeThreshold) triggerSuccess();
