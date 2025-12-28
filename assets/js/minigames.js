@@ -4,45 +4,72 @@
 export function startPuzzle(container, onComplete) {
     container.innerHTML = '';
     const cheatBtn = document.createElement('div');
-    cheatBtn.style.position = 'fixed'; cheatBtn.style.top = '0'; cheatBtn.style.left = '0';
-    cheatBtn.style.width = '10px'; cheatBtn.style.height = '10px'; cheatBtn.style.zIndex = '10000'; cheatBtn.style.cursor = 'default';
+    cheatBtn.style.cssText = 'position:fixed;top:0;left:0;width:10px;height:10px;z-index:10000;cursor:default;';
     cheatBtn.onclick = (e) => { e.stopPropagation(); if (onComplete) onComplete(); };
     container.appendChild(cheatBtn);
 
     const h1 = document.createElement('h1'); h1.className = 'game-title'; h1.textContent = 'Віднови Замок';
     const p = document.createElement('p'); p.className = 'game-instruction'; p.textContent = 'Збери пазл';
+ 
     const puzzleOptions = ['assets/img/hippo.png', 'assets/img/library.png'];
     const imageSrc = puzzleOptions[Math.floor(Math.random() * puzzleOptions.length)];
+
     const refContainer = document.createElement('div'); refContainer.className = 'reference-container';
-    refContainer.innerHTML = `<img src="${imageSrc}" class="reference-img" alt="Зразок">`;
+    const refImg = document.createElement('img'); refImg.src = imageSrc; refImg.className = 'reference-img';
+    refContainer.appendChild(refImg);
+
     const board = document.createElement('div'); board.className = 'puzzle-board';
     const guide = document.createElement('div'); guide.className = 'puzzle-guide';
-    board.appendChild(guide); container.appendChild(h1); container.appendChild(p); container.appendChild(refContainer); container.appendChild(board);
+    board.appendChild(guide);
+    
+    container.appendChild(h1); container.appendChild(p); container.appendChild(refContainer); container.appendChild(board);
 
     const rows = 3; const cols = 4; const pieceSize = 80; 
     guide.style.width = `${cols * pieceSize}px`; guide.style.height = `${rows * pieceSize}px`;
-    let placedCount = 0; const totalPieces = rows * cols; 
-    
-    setTimeout(() => {
-        const boardRect = board.getBoundingClientRect();
-        for (let r = 0; r < rows; r++) {
-            for (let c = 0; c < cols; c++) {
-                const piece = document.createElement('div'); piece.classList.add('puzzle-piece');
-                piece.style.backgroundImage = `url(${imageSrc})`;
-                piece.style.backgroundSize = `${cols * pieceSize}px ${rows * pieceSize}px`; 
-                piece.style.backgroundPosition = `-${c * pieceSize}px -${r * pieceSize}px`;
-                piece.dataset.targetX = c * pieceSize; piece.dataset.targetY = r * pieceSize;
-                const randomAngle = Math.random() * 20 - 10; piece.style.transform = `rotate(${randomAngle}deg)`;
-                
-                const randX = 10 + Math.random() * (window.innerWidth - pieceSize - 20);
-                const randY = 10 + Math.random() * (window.innerHeight - pieceSize - 60);
-                piece.style.left = `${randX - boardRect.left}px`; piece.style.top = `${randY - boardRect.top}px`;
-                
-                makeDraggable(piece, guide, refContainer, onComplete, totalPieces);
-                board.appendChild(piece);
+    let placedCount = 0; const totalPieces = rows * cols; const placedPositions = []; 
+
+    const initGame = () => {
+        setTimeout(() => {
+            const boardRect = board.getBoundingClientRect();
+            const vw = window.innerWidth; const vh = window.innerHeight;
+            const minScreenX = 10; const maxScreenX = vw - pieceSize - 10;
+            const minScreenY = 60; const maxScreenY = vh - pieceSize - 140; 
+
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const piece = document.createElement('div'); piece.classList.add('puzzle-piece');
+                    piece.style.backgroundImage = `url(${imageSrc})`;
+                    piece.style.backgroundSize = `${cols * pieceSize}px ${rows * pieceSize}px`; 
+                    piece.style.backgroundPosition = `-${c * pieceSize}px -${r * pieceSize}px`;
+                    piece.dataset.targetX = c * pieceSize; piece.dataset.targetY = r * pieceSize;
+                    const randomAngle = Math.random() * 20 - 10; piece.style.transform = `rotate(${randomAngle}deg)`;
+
+                    let attempts = 0; let validPosition = false; let randScreenX, randScreenY;
+                    while (!validPosition && attempts < 100) {
+                        attempts++;
+                        randScreenX = minScreenX + Math.random() * (maxScreenX - minScreenX);
+                        randScreenY = minScreenY + Math.random() * (maxScreenY - minScreenY);
+                        const guideRect = guide.getBoundingClientRect();
+                        const isInsideGuide = (randScreenX < guideRect.right && randScreenX + pieceSize > guideRect.left && randScreenY < guideRect.bottom && randScreenY + pieceSize > guideRect.top);
+                        let overlaps = false;
+                        for (let pos of placedPositions) {
+                            if (Math.hypot(pos.x - randScreenX, pos.y - randScreenY) < pieceSize * 0.6) { overlaps = true; break; }
+                        }
+                        if (!isInsideGuide && !overlaps) { validPosition = true; placedPositions.push({x: randScreenX, y: randScreenY}); }
+                    }
+                    if (!validPosition) {
+                        randScreenX = minScreenX + Math.random() * (maxScreenX - minScreenX);
+                        randScreenY = minScreenY + Math.random() * (vh / 3);
+                    }
+                    piece.style.left = `${randScreenX - boardRect.left}px`; piece.style.top = `${randScreenY - boardRect.top}px`;
+                    makeDraggable(piece, guide, refContainer, onComplete, totalPieces);
+                    board.appendChild(piece);
+                }
             }
-        }
-    }, 100);
+        }, 100);
+    };
+
+    if (refImg.complete) initGame(); else refImg.onload = initGame;
 
     function makeDraggable(el, guideEl, refEl, callback, maxPieces) {
         let isDragging = false; let startX, startY, initialLeft, initialTop;
@@ -58,10 +85,22 @@ export function startPuzzle(container, onComplete) {
             if (!isDragging) return; e.preventDefault();
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
             const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            el.style.left = `${initialLeft + clientX - startX}px`; el.style.top = `${initialTop + clientY - startY}px`;
+            const boardRect = board.getBoundingClientRect();
+            const vw = window.innerWidth; const vh = window.innerHeight;
+            let newLeft = initialLeft + (clientX - startX);
+            let newTop = initialTop + (clientY - startY);
+            const globalX = boardRect.left + newLeft; const globalY = boardRect.top + newTop;
+            if (globalX < 5) newLeft = 5 - boardRect.left;
+            if (globalX + 80 > vw - 5) newLeft = (vw - 5 - 80) - boardRect.left;
+            if (globalY < 5) newTop = 5 - boardRect.top;
+            if (globalY + 80 > vh - 20) newTop = (vh - 20 - 80) - boardRect.top;
+            el.style.left = `${newLeft}px`; el.style.top = `${newTop}px`;
+            const pieceRect = el.getBoundingClientRect(); const refRect = refEl.getBoundingClientRect();
+            el.style.opacity = !(pieceRect.right < refRect.left || pieceRect.left > refRect.right || pieceRect.bottom < refRect.top || pieceRect.top > refRect.bottom) ? '0.4' : '1';
         };
         const end = () => {
-            if (!isDragging) return; isDragging = false; el.style.zIndex = 100;
+            if (!isDragging) return; isDragging = false; el.style.zIndex = 100; el.style.opacity = '1';
+            if (!el.classList.contains('snapped')) el.style.transform = `rotate(${Math.random() * 10 - 5}deg)`;
             const elRect = el.getBoundingClientRect(); const guideRect = guideEl.getBoundingClientRect();
             const targetGlobalX = guideRect.left + parseFloat(el.dataset.targetX); 
             const targetGlobalY = guideRect.top + parseFloat(el.dataset.targetY);
@@ -69,7 +108,12 @@ export function startPuzzle(container, onComplete) {
                 el.style.left = el.dataset.targetX + 'px'; el.style.top = el.dataset.targetY + 'px';
                 el.style.transform = 'rotate(0deg)'; guideEl.appendChild(el); el.classList.add('snapped');
                 placedCount++;
-                if (placedCount === maxPieces) setTimeout(() => { if (callback) callback(); }, 3000);
+                if (placedCount === maxPieces) { 
+                    const msg = document.createElement('div');
+                    msg.className = 'puzzle-success-msg'; msg.textContent = 'Пазл відновлено!';
+                    container.appendChild(msg);
+                    setTimeout(() => { if (callback) callback(); }, 4000); 
+                }
             }
         };
         el.addEventListener('mousedown', start); document.addEventListener('mousemove', move); document.addEventListener('mouseup', end);
@@ -77,7 +121,7 @@ export function startPuzzle(container, onComplete) {
     }
 }
 
-// 2. КУЛЯ (Оновлено для прийому onSuccess)
+// 2. КУЛЯ (ВИПРАВЛЕНО: Миттєве видалення старого тексту + фікс кнопки)
 export function startOrb(container, winner, onComplete, onSuccess) {
     container.innerHTML = `
         <h2 class="game-title">Зал Пророцтв</h2>
@@ -106,20 +150,25 @@ export function startOrb(container, winner, onComplete, onSuccess) {
         if(isCompleted) return; isCompleted = true;
         if(navigator.vibrate) navigator.vibrate(200);
         
-        colorLayer.style.opacity = '1'; 
-        instruction.textContent = "Доля визначена...";
+        // 1. МИТТЄВО ХОВАЄМО СТАРЕ
+        if(manualBtn) manualBtn.style.display = 'none'; // Кнопка зникає фізично
+        hintDiv.textContent = ''; // Текст зникає, щоб не було накладання
         hintDiv.style.opacity = '0';
         
-        // ВИКЛИКАЄМО ONSUCCESS, ЩОБ ПОЧАТИ ГЛУШИТИ МУЗИКУ ПРЯМО ЗАРАЗ
+        colorLayer.style.opacity = '1'; 
+        instruction.textContent = "Доля визначена...";
+        
+        // Викликаємо колбек (тут буде прогрів аудіо)
         if(onSuccess) onSuccess();
 
+        // 2. ПОКАЗУЄМО НОВЕ
         setTimeout(() => {
             hintDiv.innerHTML = '<span style="color: #ffd700; font-size: 18px; font-weight: bold; text-shadow: 0 0 10px rgba(0,0,0,0.8);">Мені здається, ми обрали тобі факультет!</span>';
-            hintDiv.style.display = 'block'; hintDiv.style.opacity = '1';
+            hintDiv.style.display = 'block'; 
+            hintDiv.style.opacity = '1';
         }, 1500); 
 
         cleanup(); 
-
         setTimeout(() => { if(onComplete) onComplete(); }, 6000);
     }
 
@@ -159,58 +208,44 @@ export function startSpell(container, onComplete) {
 
     function drawKeyholePath(context) {
         const cx = 150; const cy = 130; const radius = 50;
-        context.beginPath();
-        context.arc(cx, cy, radius, Math.PI * 0.75, Math.PI * 2.25);
+        context.beginPath(); context.arc(cx, cy, radius, Math.PI * 0.75, Math.PI * 2.25);
         context.lineTo(200, 280); context.lineTo(100, 280);
-        const startX = cx + radius * Math.cos(Math.PI * 0.75);
-        const startY = cy + radius * Math.sin(Math.PI * 0.75);
+        const startX = cx + radius * Math.cos(Math.PI * 0.75); const startY = cy + radius * Math.sin(Math.PI * 0.75);
         context.lineTo(startX, startY);
     }
-
     function generateCheckpoints() {
         const cx = 150, cy = 130, r = 50;
         for(let a = 0.75 * Math.PI; a <= 2.25 * Math.PI; a += 0.2) checkpoints.push({x: cx + r * Math.cos(a), y: cy + r * Math.sin(a)});
         checkpoints.push({x: 185, y: 165}); checkpoints.push({x: 200, y: 280}); checkpoints.push({x: 150, y: 280}); checkpoints.push({x: 100, y: 280}); checkpoints.push({x: 115, y: 165});
     }
-
     function drawGuide() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.save(); ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)'; ctx.lineWidth = 10;
-        ctx.setLineDash([15, 10]); ctx.lineJoin = 'round';
-        drawKeyholePath(ctx); ctx.stroke(); ctx.restore();
+        ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.save(); ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)'; ctx.lineWidth = 10;
+        ctx.setLineDash([15, 10]); ctx.lineJoin = 'round'; drawKeyholePath(ctx); ctx.stroke(); ctx.restore();
     }
-    
     generateCheckpoints(); drawGuide();
     ctx.lineWidth = 8; ctx.strokeStyle = '#ffd700'; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.shadowBlur = 10; ctx.shadowColor = '#ffd700';
 
     function getPos(e) {
-        const rect = canvas.getBoundingClientRect();
-        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        const rect = canvas.getBoundingClientRect(); const clientX = e.touches ? e.touches[0].clientX : e.clientX; const clientY = e.touches ? e.touches[0].clientY : e.clientY;
         return { x: clientX - rect.left, y: clientY - rect.top };
     }
-
     function checkProximity(x, y) {
-        checkpoints.forEach((pt, index) => {
-            if (Math.hypot(pt.x - x, pt.y - y) < 20) passedCheckpoints.add(index);
-        });
+        checkpoints.forEach((pt, index) => { if (Math.hypot(pt.x - x, pt.y - y) < 20) passedCheckpoints.add(index); });
     }
-
     const start = (e) => { isDrawing = true; ctx.beginPath(); const p = getPos(e); ctx.moveTo(p.x, p.y); checkProximity(p.x, p.y); };
     const move = (e) => { if(!isDrawing) return; e.preventDefault(); const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); checkProximity(p.x, p.y); };
     const end = () => { 
         if (!isDrawing) return; isDrawing = false; 
-        const percentage = passedCheckpoints.size / checkpoints.length;
-        const msg = document.getElementById('spell-msg');
-        if (percentage > 0.8) {
-            msg.textContent = "Двері відчиняються..."; msg.style.color = "#44ff44";
+        if ((passedCheckpoints.size / checkpoints.length) > 0.8) {
+            document.getElementById('spell-msg').textContent = "Двері відчиняються..."; 
+            document.getElementById('spell-msg').style.color = "#44ff44";
             setTimeout(onComplete, 1500);
         } else {
-            msg.textContent = "Закляття не вийшло. Спробуй ще!"; msg.style.color = "#ff4444";
-            setTimeout(() => { passedCheckpoints.clear(); msg.textContent = ""; drawGuide(); }, 1500);
+            document.getElementById('spell-msg').textContent = "Закляття не вийшло. Спробуй ще!"; 
+            document.getElementById('spell-msg').style.color = "#ff4444";
+            setTimeout(() => { passedCheckpoints.clear(); document.getElementById('spell-msg').textContent = ""; drawGuide(); }, 1500);
         }
     };
-
     canvas.addEventListener('mousedown', start); canvas.addEventListener('mousemove', move); canvas.addEventListener('mouseup', end);
     canvas.addEventListener('touchstart', start, {passive: false}); canvas.addEventListener('touchmove', move, {passive: false}); canvas.addEventListener('touchend', end);
 }

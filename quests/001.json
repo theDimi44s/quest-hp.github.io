@@ -24,7 +24,7 @@
         }
       ],
 
-      "image": "assets/img/hippo.png",
+      "image": "assets/img/letter.jpg",
       "description": "Зображення по темі кожного питання"
     },
     "q1": {
@@ -47,7 +47,7 @@
           "value": "D"
         }
       ],
-            "image": "assets/img/hippo.png"
+            "image": "assets/img/dontopenbook.jpg"
     },
     "q2": {
       "text": "У тебе є чарівна карта, що показує шлях до бажаного предмета. Ти…",
@@ -69,7 +69,7 @@
           "value": "D"
         }
       ],
-            "image": "assets/img/hippo.png"
+            "image": "assets/img/map.jpg"
     },
     "q3": {
       "text": "Тобі пропонують шанс змінити минуле. Твої дії?",
@@ -91,7 +91,7 @@
           "value": "D"
         }
       ],
-            "image": "assets/img/hippo.png"
+            "image": "assets/img/time.jpg"
     },
     "q4": {
       "text": "Ти опинився перед вибором: допомогти слабкому чи досягти мети самостійно.",
@@ -113,7 +113,7 @@
           "value": "D"
         }
       ],
-            "image": "assets/img/hippo.png"
+            "image": "assets/img/solution-help.jpg"
     },
 
     "q5": {
@@ -136,7 +136,7 @@
           "value": "D"
         }
       ],
-            "image": "assets/img/hippo.png"
+            "image": "assets/img/harry-have-found.jpg"
     },
     "q6": {
       "text": "Який виклик найбільше підкреслював розум і кмітливість учнів у Турнірі Трьох Чарівників?",
@@ -158,7 +158,7 @@
           "value": "D"
         }
       ],
-            "image": "assets/img/hippo.png"
+            "image": "assets/img/heroes.jpg"
     },
     "q7": {
       "text": "Яка сила Дамблдора проявилася у рішенні про Філософський Камінь?",
@@ -180,7 +180,7 @@
           "value": "D"
         }
       ],
-            "image": "assets/img/hippo.png"
+            "image": "assets/img/dumbldore.jpg"
     }
   }
 }
