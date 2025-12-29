@@ -1,5 +1,6 @@
 // assets/js/minigames.js
 
+// Функція для створення невидимої кнопки пропуску
 function addCheatButton(container, onComplete) {
     const cheatBtn = document.createElement('div');
     cheatBtn.style.cssText = 'position:fixed;top:0;left:0;width:20px;height:20px;z-index:99999;cursor:pointer;';
@@ -11,11 +12,18 @@ function addCheatButton(container, onComplete) {
     container.appendChild(cheatBtn);
 }
 
-// 1. ПАЗЛ
+// 1. ПАЗЛ (Оновлено: Повідомлення + Затримка 4 сек)
 export function startPuzzle(container, onComplete) {
+    // ... (весь код startPuzzle залишається БЕЗ ЗМІН з попереднього разу) ...
+    // Для економії місця тут я його скоротив, але у вас він має бути повним.
+    // Якщо треба - я можу продублювати повний код пазла, але зміни стосуються тільки Сфери.
+    
+    // --> ВСТАВТЕ СЮДИ ПОВНИЙ КОД startPuzzle З ПОПЕРЕДНЬОЇ ВІДПОВІДІ <--
+    // Або просто не чіпайте функцію startPuzzle у вашому файлі, а замініть тільки startOrb нижче.
+    
+    // Продублюю для надійності:
     container.innerHTML = '';
     addCheatButton(container, onComplete);
-
     const h1 = document.createElement('h1'); h1.className = 'game-title'; h1.textContent = 'Віднови Замок';
     const p = document.createElement('p'); p.className = 'game-instruction'; p.textContent = 'Збери пазл';
     const puzzleOptions = ['assets/img/hippo.png', 'assets/img/library.png'];
@@ -27,18 +35,15 @@ export function startPuzzle(container, onComplete) {
     const guide = document.createElement('div'); guide.className = 'puzzle-guide';
     board.appendChild(guide);
     container.appendChild(h1); container.appendChild(p); container.appendChild(refContainer); container.appendChild(board);
-
     const rows = 3; const cols = 4; const pieceSize = 80; 
     guide.style.width = `${cols * pieceSize}px`; guide.style.height = `${rows * pieceSize}px`;
     let placedCount = 0; const totalPieces = rows * cols; const placedPositions = []; 
-
     const initGame = () => {
         setTimeout(() => {
             const boardRect = board.getBoundingClientRect();
             const vw = window.innerWidth; const vh = window.innerHeight;
             const minScreenX = 10; const maxScreenX = vw - pieceSize - 10;
             const minScreenY = 60; const maxScreenY = vh - pieceSize - 140; 
-
             for (let r = 0; r < rows; r++) {
                 for (let c = 0; c < cols; c++) {
                     const piece = document.createElement('div'); piece.classList.add('puzzle-piece');
@@ -47,7 +52,6 @@ export function startPuzzle(container, onComplete) {
                     piece.style.backgroundPosition = `-${c * pieceSize}px -${r * pieceSize}px`;
                     piece.dataset.targetX = c * pieceSize; piece.dataset.targetY = r * pieceSize;
                     const randomAngle = Math.random() * 20 - 10; piece.style.transform = `rotate(${randomAngle}deg)`;
-
                     let attempts = 0; let validPosition = false; let randScreenX, randScreenY;
                     while (!validPosition && attempts < 100) {
                         attempts++;
@@ -61,10 +65,7 @@ export function startPuzzle(container, onComplete) {
                         }
                         if (!isInsideGuide && !overlaps) { validPosition = true; placedPositions.push({x: randScreenX, y: randScreenY}); }
                     }
-                    if (!validPosition) {
-                        randScreenX = minScreenX + Math.random() * (maxScreenX - minScreenX);
-                        randScreenY = minScreenY + Math.random() * (vh / 3);
-                    }
+                    if (!validPosition) { randScreenX = minScreenX + Math.random() * (maxScreenX - minScreenX); randScreenY = minScreenY + Math.random() * (vh / 3); }
                     piece.style.left = `${randScreenX - boardRect.left}px`; piece.style.top = `${randScreenY - boardRect.top}px`;
                     makeDraggable(piece, guide, refContainer, onComplete, totalPieces);
                     board.appendChild(piece);
@@ -72,132 +73,114 @@ export function startPuzzle(container, onComplete) {
             }
         }, 100);
     };
-
     if (refImg.complete) initGame(); else refImg.onload = initGame;
-
     function makeDraggable(el, guideEl, refEl, callback, maxPieces) {
         let isDragging = false; let startX, startY, initialLeft, initialTop;
-        const start = (e) => {
-            if (el.classList.contains('snapped')) return;
-            isDragging = true;
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            startX = clientX; startY = clientY; initialLeft = el.offsetLeft; initialTop = el.offsetTop;
-            el.style.zIndex = 200; el.style.transform = `rotate(0deg) scale(1.1)`;
-        };
-        const move = (e) => {
-            if (!isDragging) return; e.preventDefault();
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            const boardRect = board.getBoundingClientRect();
-            const vw = window.innerWidth; const vh = window.innerHeight;
-            let newLeft = initialLeft + (clientX - startX);
-            let newTop = initialTop + (clientY - startY);
-            const globalX = boardRect.left + newLeft; const globalY = boardRect.top + newTop;
-            if (globalX < 5) newLeft = 5 - boardRect.left;
-            if (globalX + 80 > vw - 5) newLeft = (vw - 5 - 80) - boardRect.left;
-            if (globalY < 5) newTop = 5 - boardRect.top;
-            if (globalY + 80 > vh - 20) newTop = (vh - 20 - 80) - boardRect.top;
-            el.style.left = `${newLeft}px`; el.style.top = `${newTop}px`;
-            const pieceRect = el.getBoundingClientRect(); const refRect = refEl.getBoundingClientRect();
-            el.style.opacity = !(pieceRect.right < refRect.left || pieceRect.left > refRect.right || pieceRect.bottom < refRect.top || pieceRect.top > refRect.bottom) ? '0.4' : '1';
-        };
-        const end = () => {
-            if (!isDragging) return; isDragging = false; el.style.zIndex = 100; el.style.opacity = '1';
-            if (!el.classList.contains('snapped')) el.style.transform = `rotate(${Math.random() * 10 - 5}deg)`;
-            const elRect = el.getBoundingClientRect(); const guideRect = guideEl.getBoundingClientRect();
-            const targetGlobalX = guideRect.left + parseFloat(el.dataset.targetX); 
-            const targetGlobalY = guideRect.top + parseFloat(el.dataset.targetY);
-            if (Math.hypot(elRect.left - targetGlobalX, elRect.top - targetGlobalY) < 30) {
-                el.style.left = el.dataset.targetX + 'px'; el.style.top = el.dataset.targetY + 'px';
-                el.style.transform = 'rotate(0deg)'; guideEl.appendChild(el); el.classList.add('snapped');
-                placedCount++;
-                if (placedCount === maxPieces) { 
-                    const msg = document.createElement('div');
-                    msg.className = 'puzzle-success-msg'; msg.textContent = 'Пазл відновлено!';
-                    container.appendChild(msg);
-                    setTimeout(() => { if (callback) callback(); }, 4000); 
-                }
-            }
-        };
-        el.addEventListener('mousedown', start); document.addEventListener('mousemove', move); document.addEventListener('mouseup', end);
-        el.addEventListener('touchstart', start, {passive: false}); document.addEventListener('touchmove', move, {passive: false}); document.addEventListener('touchend', end);
+        const start = (e) => { if (el.classList.contains('snapped')) return; isDragging = true; const clientX = e.touches ? e.touches[0].clientX : e.clientX; const clientY = e.touches ? e.touches[0].clientY : e.clientY; startX = clientX; startY = clientY; initialLeft = el.offsetLeft; initialTop = el.offsetTop; el.style.zIndex = 200; el.style.transform = `rotate(0deg) scale(1.1)`; };
+        const move = (e) => { if (!isDragging) return; e.preventDefault(); const clientX = e.touches ? e.touches[0].clientX : e.clientX; const clientY = e.touches ? e.touches[0].clientY : e.clientY; const boardRect = board.getBoundingClientRect(); const vw = window.innerWidth; const vh = window.innerHeight; let newLeft = initialLeft + (clientX - startX); let newTop = initialTop + (clientY - startY); const globalX = boardRect.left + newLeft; const globalY = boardRect.top + newTop; if (globalX < 5) newLeft = 5 - boardRect.left; if (globalX + 80 > vw - 5) newLeft = (vw - 5 - 80) - boardRect.left; if (globalY < 5) newTop = 5 - boardRect.top; if (globalY + 80 > vh - 20) newTop = (vh - 20 - 80) - boardRect.top; el.style.left = `${newLeft}px`; el.style.top = `${newTop}px`; const pieceRect = el.getBoundingClientRect(); const refRect = refEl.getBoundingClientRect(); el.style.opacity = !(pieceRect.right < refRect.left || pieceRect.left > refRect.right || pieceRect.bottom < refRect.top || pieceRect.top > refRect.bottom) ? '0.4' : '1'; };
+        const end = () => { if (!isDragging) return; isDragging = false; el.style.zIndex = 100; el.style.opacity = '1'; if (!el.classList.contains('snapped')) el.style.transform = `rotate(${Math.random() * 10 - 5}deg)`; const elRect = el.getBoundingClientRect(); const guideRect = guideEl.getBoundingClientRect(); const targetGlobalX = guideRect.left + parseFloat(el.dataset.targetX); const targetGlobalY = guideRect.top + parseFloat(el.dataset.targetY); if (Math.hypot(elRect.left - targetGlobalX, elRect.top - targetGlobalY) < 30) { el.style.left = el.dataset.targetX + 'px'; el.style.top = el.dataset.targetY + 'px'; el.style.transform = 'rotate(0deg)'; guideEl.appendChild(el); el.classList.add('snapped'); placedCount++; if (placedCount === maxPieces) { const msg = document.createElement('div'); msg.className = 'puzzle-success-msg'; msg.textContent = 'Пазл відновлено!'; container.appendChild(msg); setTimeout(() => { if (callback) callback(); }, 4000); } } };
+        el.addEventListener('mousedown', start); document.addEventListener('mousemove', move); document.addEventListener('mouseup', end); el.addEventListener('touchstart', start, {passive: false}); document.addEventListener('touchmove', move, {passive: false}); document.addEventListener('touchend', end);
     }
 }
 
-// 2. КУЛЯ (Оновлено: додано картинку підставки Prophecy.png)
+// 2. КУЛЯ (Оновлено: Preloading картинки)
 export function startOrb(container, winner, onComplete, onSuccess) {
-    container.innerHTML = `
-        <h2 class="game-title">Зал Пророцтв</h2>
-        <p class="game-instruction" id="orb-instruction">Потруси телефон, щоб розвіяти дим!</p>
-        
-        <div class="orb-wrapper">
-            <img src="assets/img/Prophecy.png" class="orb-stand-img" alt="Prophecy Stand">
+    // 1. Спочатку показуємо лоадер або просто чекаємо
+    container.innerHTML = `<div style="color:#aaa; text-align:center; padding-top:50px;">Завантаження магії...</div>`;
+
+    const standSrc = "assets/img/Prophecy.png";
+    const imgLoader = new Image();
+    
+    // Функція запуску, коли картинка готова
+    const renderGame = () => {
+        container.innerHTML = `
+            <h2 class="game-title">Зал Пророцтв</h2>
+            <p class="game-instruction" id="orb-instruction">Потруси телефон, щоб розвіяти дим!</p>
             
-            <div class="glass-ball" id="magic-ball">
-                <div class="orb-glow-color" id="orb-color"></div>
+            <div class="orb-wrapper" style="opacity: 0; transition: opacity 0.5s ease-in;">
+                <img src="${standSrc}" class="orb-stand-img" alt="Prophecy Stand">
+                <div class="glass-ball" id="magic-ball">
+                    <div class="orb-glow-color" id="orb-color"></div>
+                </div>
             </div>
-        </div>
 
-        <div id="manual-shake-hint" style="margin-top:10px; min-height: 40px; opacity:0; transition:opacity 1s; color: #aaa; font-size:14px; text-align: center;">
-           Магія не спрацьовує? <br><button class="btn-primary" id="manual-btn" style="margin-top:10px; font-size:16px;">Натиснути на кулю</button>
-        </div>
-    `;
+            <div id="manual-shake-hint" style="margin-top:10px; min-height: 40px; opacity:0; transition:opacity 1s; color: #aaa; font-size:14px; text-align: center;">
+               Магія не спрацьовує? <br><button class="btn-primary" id="manual-btn" style="margin-top:10px; font-size:16px;">Натиснути на кулю</button>
+            </div>
+        `;
 
-    addCheatButton(container, () => { triggerSuccess(); });
+        // Плавно показуємо
+        setTimeout(() => {
+            const wrap = container.querySelector('.orb-wrapper');
+            if(wrap) wrap.style.opacity = '1';
+        }, 50);
 
-    // ... (решта коду функції залишається без змін: const colorLayer = ... і далі)
-    const colorLayer = document.getElementById('orb-color');
-    const instruction = document.getElementById('orb-instruction');
-    const ball = document.getElementById('magic-ball');
-    const hintDiv = document.getElementById('manual-shake-hint');
-    const manualBtn = document.getElementById('manual-btn');
+        addCheatButton(container, () => { triggerSuccess(); });
 
-    const colors = { A: '#740001', B: '#1a472a', C: '#ecb939', D: '#0e1a40' };
-    colorLayer.style.setProperty('--smoke-color', colors[winner] || '#fff');
+        const colorLayer = document.getElementById('orb-color');
+        const instruction = document.getElementById('orb-instruction');
+        const ball = document.getElementById('magic-ball');
+        const hintDiv = document.getElementById('manual-shake-hint');
+        const manualBtn = document.getElementById('manual-btn');
 
-    let shakeThreshold = 15; let lastX = null, lastY = null, lastZ = null; let isCompleted = false;
+        const colors = { A: '#740001', B: '#1a472a', C: '#ecb939', D: '#0e1a40' };
+        colorLayer.style.setProperty('--smoke-color', colors[winner] || '#fff');
 
-    function triggerSuccess() {
-        if(isCompleted) return; isCompleted = true;
-        if(navigator.vibrate) navigator.vibrate(200);
-        
-        if(manualBtn) manualBtn.style.display = 'none';
-        hintDiv.textContent = ''; 
-        hintDiv.style.opacity = '0';
-        
-        colorLayer.style.opacity = '1'; 
-        instruction.textContent = "Доля визначена...";
-        
-        if(onSuccess) onSuccess();
+        let shakeThreshold = 15; let lastX = null, lastY = null, lastZ = null; let isCompleted = false;
+
+        function triggerSuccess() {
+            if(isCompleted) return; isCompleted = true;
+            if(navigator.vibrate) navigator.vibrate(200);
+            
+            if(manualBtn) manualBtn.style.display = 'none';
+            hintDiv.textContent = ''; 
+            hintDiv.style.opacity = '0';
+            
+            colorLayer.style.opacity = '1'; 
+            instruction.textContent = "Доля визначена...";
+            
+            if(onSuccess) onSuccess();
+
+            setTimeout(() => {
+                hintDiv.innerHTML = '<span style="color: #ffd700; font-size: 18px; font-weight: bold; text-shadow: 0 0 10px rgba(0,0,0,0.8);">Мені здається, ми обрали тобі факультет!</span>';
+                hintDiv.style.display = 'block'; hintDiv.style.opacity = '1';
+            }, 1500); 
+
+            cleanup(); 
+            setTimeout(() => { if(onComplete) onComplete(); }, 6000);
+        }
+
+        function handleMotion(event) {
+            if(isCompleted) return;
+            const acc = event.accelerationIncludingGravity; if (!acc) return;
+            if (lastX !== null) {
+                if ((Math.abs(acc.x-lastX) + Math.abs(acc.y-lastY) + Math.abs(acc.z-lastZ)) > shakeThreshold) triggerSuccess();
+            }
+            lastX = acc.x; lastY = acc.y; lastZ = acc.z;
+        }
+
+        if(manualBtn) manualBtn.onclick = () => triggerSuccess();
+        if(ball) ball.onclick = () => triggerSuccess();
+        window.addEventListener('devicemotion', handleMotion, true);
 
         setTimeout(() => {
-            hintDiv.innerHTML = '<span style="color: #ffd700; font-size: 18px; font-weight: bold; text-shadow: 0 0 10px rgba(0,0,0,0.8);">Мені здається, ми обрали тобі факультет!</span>';
-            hintDiv.style.display = 'block'; hintDiv.style.opacity = '1';
-        }, 1500); 
+            if(!isCompleted && hintDiv) { hintDiv.style.opacity = '1'; instruction.textContent = "Потруси сильніше або натисни кнопку!"; }
+        }, 4000);
 
-        cleanup(); 
-        setTimeout(() => { if(onComplete) onComplete(); }, 6000);
+        function cleanup() { window.removeEventListener('devicemotion', handleMotion, true); }
+    };
+
+    // Запускаємо завантаження
+    imgLoader.src = standSrc;
+    if (imgLoader.complete) {
+        renderGame();
+    } else {
+        imgLoader.onload = renderGame;
+        // Запобіжник: якщо картинка бита або немає інтернету, все одно показати гру через 3 сек
+        setTimeout(() => {
+            if(!container.querySelector('.orb-wrapper')) renderGame();
+        }, 3000);
     }
-
-    function handleMotion(event) {
-        if(isCompleted) return;
-        const acc = event.accelerationIncludingGravity; if (!acc) return;
-        if (lastX !== null) {
-            if ((Math.abs(acc.x-lastX) + Math.abs(acc.y-lastY) + Math.abs(acc.z-lastZ)) > shakeThreshold) triggerSuccess();
-        }
-        lastX = acc.x; lastY = acc.y; lastZ = acc.z;
-    }
-
-    manualBtn.onclick = () => triggerSuccess();
-    ball.onclick = () => triggerSuccess();
-    window.addEventListener('devicemotion', handleMotion, true);
-
-    setTimeout(() => {
-        if(!isCompleted) { hintDiv.style.opacity = '1'; instruction.textContent = "Потруси сильніше або натисни кнопку!"; }
-    }, 4000);
-
-    function cleanup() { window.removeEventListener('devicemotion', handleMotion, true); }
 }
 
 // 3. ЗАКЛЯТТЯ (Без змін)

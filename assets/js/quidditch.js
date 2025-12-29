@@ -13,6 +13,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const scoreVal = document.getElementById('score-val');
     const missVal = document.getElementById('miss-val');
     const finalScoreText = document.getElementById('final-score-text');
+    const endTitle = endModal.querySelector('.game-title'); // Для зміни заголовка (Перемога/Поразка)
+    
     const gameLayer = document.getElementById('game-layer');
     const ambientLayer = document.getElementById('ambient-layer');
 
@@ -20,20 +22,14 @@ document.addEventListener('DOMContentLoaded', () => {
     let state = {
         score: 0,
         misses: 0,
-        level: 1,
         isPlaying: false,
         snitchTimer: null,
         trailInterval: null
     };
 
     const maxMisses = 5;
-    
-    // Час на реакцію (стає меншим з рівнем)
-    const levels = {
-        1: 2200, 
-        2: 1600, 
-        3: 1100   
-    };
+    const targetScore = 150; // Ціль для перемоги
+    const pointsPerCatch = 10; // Очків за один снитч
 
     // --- 1. АТМОСФЕРА (Гравці) ---
     function initAmbientLayer() {
@@ -56,41 +52,32 @@ document.addEventListener('DOMContentLoaded', () => {
         const duration = 3000 + Math.random() * 4000;
         
         el.style.transition = `transform ${duration}ms linear`;
-        el.style.transform = `translate(${x}px, ${y}px)`; // scale успадковується з CSS якщо не перезаписати, але тут ми рухаємо через translate
+        el.style.transform = `translate(${x}px, ${y}px)`; 
 
         setTimeout(() => {
             if(document.body.contains(el)) animatePlayer(el);
         }, duration);
     }
 
-    // --- 2. ЕФЕКТИ (Шлейф та Клік) ---
-    
-    // Створення частинки шлейфу
+    // --- 2. ЕФЕКТИ ---
     function createTrailDot(x, y) {
         const dot = document.createElement('div');
         dot.className = 'trail-dot';
-        // Центруємо частинку відносно координат снитча (додаємо зміщення, бо снитч 24px)
         dot.style.left = (x + 8) + 'px'; 
         dot.style.top = (y + 8) + 'px';
         gameLayer.appendChild(dot);
-
-        // Видаляємо після анімації (0.6s в CSS)
         setTimeout(() => { dot.remove(); }, 600);
     }
 
-    // Запуск генератора шлейфу
     function startTrail(snitchEl) {
         if(state.trailInterval) clearInterval(state.trailInterval);
-        
         state.trailInterval = setInterval(() => {
             if(!state.isPlaying || !snitchEl) return;
-            // Беремо поточні координати снитча (вони змінюються плавно через CSS)
             const rect = snitchEl.getBoundingClientRect();
             createTrailDot(rect.left, rect.top);
-        }, 40); // Кожні 40мс ставимо крапку
+        }, 40);
     }
 
-    // Візуальний ефект спіймання
     function createCatchEffect(x, y) {
         const effect = document.createElement('div');
         effect.className = 'catch-effect';
@@ -104,64 +91,60 @@ document.addEventListener('DOMContentLoaded', () => {
     function spawnSnitch() {
         if (!state.isPlaying) return;
 
-        // Перевірка на програш
+        // 1. ПЕРЕВІРКА НА ПЕРЕМОГУ
+        if (state.score >= targetScore) {
+            gameWin();
+            return;
+        }
+
+        // 2. ПЕРЕВІРКА НА ПОРАЗКУ
         if (state.misses >= maxMisses) {
             gameOver();
             return;
         }
 
-        // Рівні
-        if (state.score >= 10) state.level = 3;
-        else if (state.score >= 5) state.level = 2;
-        else state.level = 1;
+        // Розрахунок швидкості (чим більше очок, тим швидше)
+        // Початкова швидкість 2000мс, кінцева (на 150 очках) десь 800мс
+        const progress = state.score / targetScore; 
+        const lifeTime = 2000 - (progress * 1200); 
 
-        const lifeTime = levels[state.level];
-
-        // Знаходимо або створюємо снитч
+        // Створення або пошук снитча
         let snitch = document.getElementById('snitch');
         if (!snitch) {
             snitch = document.createElement('div');
             snitch.id = 'snitch';
             
-            // Клік по снитчу
             snitch.onmousedown = snitch.ontouchstart = (e) => {
                 e.preventDefault(); 
                 if(!state.isPlaying) return;
-                
-                // Отримуємо координати кліку для ефекту
                 const clientX = e.touches ? e.touches[0].clientX : e.clientX;
                 const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-                
                 catchSnitch(snitch, clientX, clientY);
             };
             
             gameLayer.appendChild(snitch);
-            // Запускаємо шлейф
             startTrail(snitch);
         }
 
-        // Нова позиція (безпечні відступи)
+        // Позиція
         const padding = 50; 
         const maxX = window.innerWidth - padding * 2;
         const maxY = window.innerHeight - padding * 2;
         const x = padding + Math.random() * maxX;
         const y = padding + Math.random() * maxY;
 
-        // Задаємо нові координати. CSS transition зробить рух плавним.
         snitch.style.left = `${x}px`;
         snitch.style.top = `${y}px`;
 
-        // Скидаємо старий таймер "втечі"
+        // Таймер втечі
         if (state.snitchTimer) clearTimeout(state.snitchTimer);
 
-        // Таймер: якщо не спіймав за lifeTime
         state.snitchTimer = setTimeout(() => {
             if(state.isPlaying) {
-                // Промах!
                 state.misses++;
                 updateUI();
                 
-                // Снитч летить далі (рекурсія)
+                // Промахнувся - спробуй ще (або кінець гри)
                 if (state.misses < maxMisses) {
                     spawnSnitch(); 
                 } else {
@@ -172,27 +155,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function catchSnitch(el, clickX, clickY) {
-        // Зупиняємо таймер втечі
         clearTimeout(state.snitchTimer);
         
-        // ВІБРАЦІЯ (Проста, без дозволів, працює на Android завжди, на iOS при взаємодії)
         if(navigator.vibrate) navigator.vibrate(70);
-
-        // Візуальний ефект
         createCatchEffect(clickX, clickY);
 
-        state.score++;
+        state.score += pointsPerCatch; // +10 очок
         updateUI();
         
-        // Миттєво переміщуємо снитч у нове місце (імітуємо, що він втік і з'явиться в іншому місці)
-        // Або можна дати йому "зникнути" і з'явитися.
-        // Для динаміки краще хай летить далі одразу.
+        // Миттєвий переліт
         setTimeout(spawnSnitch, 100); 
     }
 
     // --- 4. УПРАВЛІННЯ ГРОЮ ---
     function startGame() {
-        state = { score: 0, misses: 0, level: 1, isPlaying: true, snitchTimer: null, trailInterval: null };
+        state = { score: 0, misses: 0, isPlaying: true, snitchTimer: null, trailInterval: null };
         updateUI();
         
         modalOverlay.classList.remove('active');
@@ -203,14 +180,24 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function gameOver() {
+        finishGame("Матч завершено!", `Твій результат: ${state.score} очок`);
+    }
+
+    function gameWin() {
+        // Вітання при досягненні 150 очок
+        finishGame("Перемога!", "Гравцю вдалось успішно піймати снитч!");
+    }
+
+    function finishGame(title, message) {
         state.isPlaying = false;
         clearTimeout(state.snitchTimer);
         clearInterval(state.trailInterval);
         
         const snitch = document.getElementById('snitch');
-        if (snitch) snitch.remove(); // Прибираємо снитч в кінці
+        if (snitch) snitch.remove();
 
-        finalScoreText.textContent = `Твій результат: ${state.score} очок`;
+        endTitle.textContent = title;
+        finalScoreText.textContent = message;
         
         modalOverlay.classList.add('active');
         startModal.style.display = 'none';
@@ -218,8 +205,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateUI() {
-        scoreVal.textContent = state.score;
+        // Показуємо прогрес, наприклад "10 / 150"
+        scoreVal.textContent = `${state.score} / ${targetScore}`;
         missVal.textContent = state.misses;
+        
         if(state.misses >= 3) missVal.style.color = '#ff4444';
         else missVal.style.color = '#fff';
     }
