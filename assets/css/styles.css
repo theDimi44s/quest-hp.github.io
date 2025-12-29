@@ -171,12 +171,9 @@ button {
     position: relative;
     width: 90%; 
     max-width: 380px; 
-    
-    /* ЗМІНА: Висота тепер підлаштовується під вміст, але не менше 320px */
     height: auto; 
     min-height: 290px;
-    padding-bottom: 10px; /* Невеликий відступ знизу */
-    
+    padding-bottom: 10px; 
     background-color: #2d1b15;
     border: 5px solid #1a100c; border-radius: 4px;
     box-shadow: inset 0 0 30px rgba(0,0,0,0.9);
@@ -190,8 +187,6 @@ button {
   background-color: rgba(14, 5, 22, 0.911); 
   z-index: 6;
   box-shadow: 1px 1px 15px 3px rgba(0, 0, 0, 0.5);
-  
-  /* ЗМІНА: Прибираємо величезний відступ */
   margin-bottom: 0; 
 }
 
@@ -214,7 +209,7 @@ button {
 
 /* ВІКТОРИНА (Карточка) */
 .q-card { 
-    width: 95%; /* Ширше для мобільних */
+    width: 95%; 
     max-width: 450px; 
     background: #f5f5f5; 
     border-radius: 4px; 
@@ -231,44 +226,35 @@ button {
 
 .q-text { 
     font-size: 20px; 
-    margin-bottom: 12px; /* Трішки зменшив відступ до картинки */
-    line-height: 1.4; /* Збільшив міжрядковий інтервал, щоб літери не налипали */
+    margin-bottom: 12px; 
+    line-height: 1.4; 
     font-weight: 600;
     text-align: center; 
     width: 100%;
-    
-    /* ВИПРАВЛЕННЯ ОБРІЗАННЯ */
-    padding-top: 5px; /* Даємо простір для верхівок літер */
+    padding-top: 5px; 
     display: block;
 }
 
 .options { display: flex; flex-direction: column; gap: 8px; width: 100%; }
 
-/* --- КНОПКИ ВІКТОРИНИ (Оновлені) --- */
+/* --- КНОПКИ ВІКТОРИНИ --- */
 .opt-btn { 
     background: #8333af; 
     color: #fff; 
     border-radius: 4px; 
     border: 1px solid #3e2b16;
-    
-    /* Десктоп: Базовий розмір */
     font-size: 22px; 
     padding: 15px 10px;
-    
     line-height: 1.2; 
     width: 100%; 
-    
-    /* Центрування тексту */
     display: flex;
     align-items: center;
     justify-content: center;
-    text-align: center; /* Горизонтальне центрування тексту */
-    
+    text-align: center; 
     white-space: normal; 
     word-wrap: break-word; 
     height: auto; 
-    min-height: 60px; /* Збільшили висоту для зручності */
-    
+    min-height: 60px; 
     transition: transform 0.1s; 
     -webkit-tap-highlight-color: transparent;
 }
@@ -276,55 +262,22 @@ button {
 @media (hover: hover) { .opt-btn:hover { background: #4c1e67; } }
 .opt-btn:active { transform: scale(0.96); background: #4c1e67; }
 
-/* === ЯВНІ РОЗМІРИ ШРИФТІВ === */
+/* Шрифти */
+.opt-btn.text-lg { font-size: 24px; }
+.opt-btn.text-md { font-size: 19px; padding: 12px 10px; }
+.opt-btn.text-sm { font-size: 16px; padding: 10px 8px; line-height: 1.3; }
 
-/* Великий текст (для коротких фраз) */
-.opt-btn.text-lg { 
-    font-size: 24px; 
-    /* font-weight: bold; /* Жирніший для коротких */
-}
-
-/* Середній текст */
-.opt-btn.text-md { 
-    font-size: 19px; 
-    padding: 12px 10px;
-}
-
-/* Довгий текст */
-.opt-btn.text-sm { 
-    font-size: 16px; 
-    padding: 10px 8px; 
-    line-height: 1.3;
-}
-
-/* --- АДАПТИВ (ТЕЛЕФОНИ) --- */
 @media (max-width: 500px) {
-    /* На мобільному шрифт має бути ЩЕ БІЛЬШИМ для Lumos */
-    
-    /* Короткі відповіді (як на скріншоті) будуть величезними */
-    .opt-btn.text-lg { 
-        font-size: 21px; 
-    } 
-    
-    /* Середні */
-    .opt-btn.text-md { 
-        font-size: 20px; 
-    } 
-    
-    /* Довгі - щоб влазили */
-    .opt-btn.text-sm { 
-        font-size: 16px; 
-    }
-    
+    .opt-btn.text-lg { font-size: 21px; } 
+    .opt-btn.text-md { font-size: 20px; } 
+    .opt-btn.text-sm { font-size: 16px; } 
     .q-card { padding: 15px 10px; }
 }
 
-/* NAV-BAR */
-
-/* КАРТИНКА ПИТАННЯ (Базовий стиль) */
+/* КАРТИНКА ПИТАННЯ */
 .q-image {
     width: 100%;
-    height: 180px; /* Висота для ПК */
+    height: 180px; 
     object-fit: cover;
     border-radius: 8px;
     margin-bottom: 12px;
@@ -343,78 +296,65 @@ button {
 }
 .nav-btn:hover { background: rgba(50, 50, 50, 0.95); color: #fff; border-color: #fff; }
 
-/* --- КУЛЯ (ВИПРАВЛЕНО ФОН ТА СИНТАКСИС) --- */
-.orb-container { 
-    margin-top: 20px; 
-    display: flex; 
-    flex-direction: column; 
-    align-items: center; 
+/* --- КУЛЯ З ПІДСТАВКОЮ (Prophecy) ОНОВЛЕНО --- */
+
+/* Контейнер-обгортка для картинки і кулі */
+.orb-wrapper {
+    position: relative;
+    width: 300px; /* Ширина всієї конструкції */
+    max-width: 90vw;
+    margin: 20px auto 0 auto;
+    display: flex;
+    justify-content: center;
 }
 
+/* Картинка підставки (змії) */
+.orb-stand-img {
+    width: 100%;
+    height: auto;
+    display: block;
+    position: relative;
+    z-index: 1; /* Підставка знизу */
+}
+
+/* Сама магічна куля (дим) */
 .glass-ball { 
-    width: 240px; 
-    height: 240px; 
+    /* Абсолютне позиціонування поверх картинки */
+    position: absolute;
+    z-index: 2; /* Куля зверху */
+    
+    /* === НАЛАШТУВАННЯ РОЗМІРУ ТА ПОЗИЦІЇ === */
+    top: 3px;       /* Відступ зверху від краю картинки */
+    width: 235px;   /* Ширина кулі */
+    height: 235px;  /* Висота кулі */
+    left: 50%;
+    transform: translateX(-50%); /* Центруємо горизонтально */
+    
     border-radius: 50%; 
-    position: relative; 
     
-    /* Фон напівпрозорий 
-    background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.1), rgba(0, 0, 0, 0.3));
-    */
-
-    /* ЗМІНА: Зменшуємо чорноту з 0.3 до 0.1, додаємо більше бліку (0.2) */
-    background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.2), rgba(0, 0, 0, 0.1));
-
-    /* Тіні для об'єму */
+    /* Ефекти скла */
+    background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.15), rgba(0, 0, 0, 0.1));
     box-shadow: 
-        inset 0 0 30px rgba(0,0,0,0.8), 
-        0 0 20px rgba(0,0,0,0.5);       
-        
-    backdrop-filter: blur(3px);
+        inset 0 0 20px rgba(0,0,0,0.6), 
+        0 0 10px rgba(255, 255, 255, 0.1);       
+    backdrop-filter: blur(2px);
     
-    /* === МАСКА ДЛЯ SAFARI/IOS (Оновлена) === */
-    /* Це обрізає все зайве строго по колу, прибираючи "квадратний" дим */
+    /* Маска для Safari */
     -webkit-mask-image: radial-gradient(white, white); 
     mask-image: radial-gradient(white, white);
     overflow: hidden; 
-    border-radius: 50%; /* Дублюємо для надійності */
-    
-    z-index: 10;
-    transform: translateZ(0); /* Додатковий фікс для Safari */
 }
 
-/* ДИМ В КУЛІ OLD VERSION 
-.orb-glow-color { 
-    position: absolute; 
-    inset: -50%; 
-    opacity: 0; 
-    transition: opacity 2s ease;
-    /* Колір диму */ /*
-    background: conic-gradient(from 0deg, transparent 0%, var(--smoke-color, #fff) 20%, transparent 40%, var(--smoke-color, #fff) 60%, transparent 80%, var(--smoke-color, #fff) 100%);
-    filter: blur(30px); 
-    animation: smokeSpin 4s linear infinite; 
-    mix-blend-mode: hard-light;
-}
-
-*/
-
-/* ДИМ В КУЛІ OLD VERSION  */
+/* Дим всередині */
 .orb-glow-color { 
     position: absolute; 
     inset: -50%; 
     opacity: 0; 
     transition: opacity 2s ease;
     
-    /* Колір диму */
     background: conic-gradient(from 0deg, transparent 0%, var(--smoke-color, #fff) 20%, transparent 40%, var(--smoke-color, #fff) 60%, transparent 80%, var(--smoke-color, #fff) 100%);
     
-    /* === ГОЛОВНІ ЗМІНИ ТУТ === */
-    
-    /* 1. Більше розмиття для м'якості */
-    /* 2. brightness(2.0) - подвоює яскравість кольору */
-    /* 3. drop-shadow - створює ефект світіння навколо */
     filter: blur(40px) brightness(2.0) drop-shadow(0 0 20px var(--smoke-color)); 
-    
-    /* screen - працює як світло (додає яскравість до фону), замість hard-light */
     mix-blend-mode: screen;
     
     animation: smokeSpin 4s linear infinite; 
@@ -424,6 +364,25 @@ button {
     0% { transform: rotate(0deg) scale(1); } 
     50% { transform: rotate(180deg) scale(1.2); } 
     100% { transform: rotate(360deg) scale(1); }
+}
+
+/* Адаптив для маленьких телефонів (Сфера) */
+@media (max-width: 380px) {
+    .orb-wrapper {
+        width: 260px;
+    }
+    .glass-ball {
+        width: 205px;
+        height: 205px;
+        top: 2px;
+    }
+}
+
+.orb-container { 
+    margin-top: 20px; 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
 }
 
 .btn-primary { 
@@ -489,75 +448,40 @@ canvas { position: relative; z-index: 10; }
 
 #quest .result-text-container { position: relative; z-index: 20; margin-top: 5px; padding: 0 10px; }
 
-/* --- АДАПТИВ (ТЕЛЕФОНИ - КОМПАКТНИЙ РЕЖИМ) --- */
+/* --- АДАПТИВ ЗАГАЛЬНИЙ (ТЕЛЕФОНИ) --- */
 @media (max-width: 500px) {
-    
-    /* 1. Стискаємо контейнер, щоб все влізло без скролу */
     .quest-wrap {
-        justify-content: flex-start; /* Тягнемо все вгору */
+        justify-content: flex-start;
         padding-top: 10px;
     }
-
-    /* 2. Зменшуємо картинку ще сильніше */
-    /* Вона декоративна, текст важливіший */
     .q-image {
-        height: 200px !important; /* Було 140px */
+        height: 200px !important; 
         margin-bottom: 8px;
     }
-
-    /* 3. Текст питання компактніший */
     .q-text {
         font-size: 19px;
         margin-bottom: 10px;
         line-height: 1.2;
     }
-    
     .q-card {
         padding: 10px 8px;
         width: 100%;
         max-width: 96%;
     }
-
-    .options {
-        gap: 6px; /* Менша відстань між кнопками */
-    }
-
-    /* 4. НАЛАШТУВАННЯ КНОПОК (Щоб не обрізало текст) */
+    .options { gap: 6px; }
     .opt-btn { 
-        /* Збільшуємо line-height, щоб хвостики літер (ї, щ, у, р) не різались */
         line-height: 1.35; 
-        
-        /* Компенсуємо це меншими відступами всередині */
         padding: 6px 4px; 
-        
-        min-height: 48px; /* Мінімальна висота */
+        min-height: 48px; 
     }       
-
-    /* 5. Шрифти (Збалансовані для Lumos) */
-    /* Великий (для коротких фраз в один рядок) */
-    .opt-btn.text-lg { 
-        font-size: 20px; 
-        padding-top: 8px; /* Трохи опускаємо текст візуально */
-    } 
-    
-    /* Середній */
-    .opt-btn.text-md { 
-        font-size: 18px; 
-    } 
-    
-    /* Довгий */
-    .opt-btn.text-sm { 
-        font-size: 15px; 
-        line-height: 1.2; /* Для довгих текстів щільніше */
-    } 
-    
-    /* 6. Кнопки навігації (внизу) */
+    .opt-btn.text-lg { font-size: 20px; padding-top: 8px; } 
+    .opt-btn.text-md { font-size: 18px; } 
+    .opt-btn.text-sm { font-size: 15px; line-height: 1.2; } 
     .nav-controls {
         margin-top: 10px;
         margin-bottom: 5px;
         gap: 8px;
     }
-    
     .nav-btn {
         font-size: 14px;
         padding: 10px 0;
@@ -565,42 +489,25 @@ canvas { position: relative; z-index: 10; }
     }
 }
 
-/* ФІКС ДЛЯ МАЛЕНЬКИХ ЕКРАНІВ (iPhone SE, старі моделі) */
 @media (max-height: 600px) {
-    .q-image { display: none; } /* Якщо екран дуже низький - ховаємо картинку взагалі */
+    .q-image { display: none; }
     .game-title { margin-top: 40px; font-size: 2rem; }
 }
 
-/* === СПЕЦІАЛЬНИЙ КЛАС ДЛЯ ПАЗЛА === */
-/* Коли цей клас додається до main#quest, він піднімає весь контент вгору */
+/* === ПАЗЛ: КЛАС ДЛЯ АКТИВАЦІЇ === */
 .quest-wrap.puzzle-active {
     justify-content: flex-start !important;
-    padding-top: 40px !important; /* Відступ від верху, щоб не прилипало до стелі */
+    padding-top: 40px !important; 
 }
-
-/* Для телефонів піднімаємо ще вище */
 @media (max-width: 500px) {
-    .quest-wrap.puzzle-active {
-        padding-top: 20px !important;
-    }
-    
-    /* Зменшуємо заголовок саме для пазла, щоб звільнити місце */
-    .quest-wrap.puzzle-active .game-title {
-        font-size: 1.8rem;
-        margin-top: 10px;
-        margin-bottom: 10px;
-    }
-    
-    .quest-wrap.puzzle-active .game-instruction {
-        margin-bottom: 10px;
-        font-size: 1.2rem;
-    }
+    .quest-wrap.puzzle-active { padding-top: 20px !important; }
+    .quest-wrap.puzzle-active .game-title { font-size: 1.8rem; margin-top: 10px; margin-bottom: 10px; }
+    .quest-wrap.puzzle-active .game-instruction { margin-bottom: 10px; font-size: 1.2rem; }
 }
 
 /* === ФІКС ДЛЯ ЦЕНТРУВАННЯ "ЗАЛУ ПРОРОЦТВ" === */
-/* Цей клас ми додали в JS (showPermissionScreen) */
 .permission-card {
-    position: absolute !important; /* Вириваємо з потоку flex */
+    position: absolute !important; 
     top: 50% !important;
     left: 50% !important;
     transform: translate(-50%, -50%) !important;
@@ -609,12 +516,8 @@ canvas { position: relative; z-index: 10; }
     max-width: 400px;
     z-index: 100;
 }
-
-/* Для телефонів - переконаємось, що не вилазить */
 @media (max-width: 500px) {
-    .permission-card {
-        top: 45% !important; /* Трішки вище середини, щоб не перекривало кнопки браузера */
-    }
+    .permission-card { top: 45% !important; }
 }
 
 /* === ПОВІДОМЛЕННЯ ПРО УСПІХ У ПАЗЛІ === */
@@ -630,18 +533,252 @@ canvas { position: relative; z-index: 10; }
     font-size: 28px;
     font-weight: bold;
     text-shadow: 0 0 10px #44ff44;
-    z-index: 500; /* Поверх пазлів */
+    z-index: 500;
     pointer-events: none;
     animation: popIn 0.5s ease;
     white-space: nowrap;
 }
 
-/* === ПЛАВНА ПОЯВА КАРТИНОК ВІКТОРИНИ === */
-.q-image {
-    opacity: 0; /* Спочатку невидима */
-    transition: opacity 0.5s ease-in;
+/* === ПЛАВНА ПОЯВА КАРТИНОК === */
+.q-image { opacity: 0; transition: opacity 0.5s ease-in; }
+.q-image.loaded { opacity: 1; }
+
+/* =========================================
+   КВІДДИЧ (STYLES.CSS ADDITION - ОНОВЛЕНО ФОН)
+   ========================================= */
+
+/* Поле (ФОН-ТРИБУНИ) */
+#quidditch-field {
+    position: fixed; inset: 0; z-index: 0;
+    display: flex; justify-content: center; align-items: center;
+    background-color: #0f0f0f; 
+    background-image: 
+        repeating-linear-gradient(rgba(0,0,0,0.4) 0px, rgba(0,0,0,0.4) 2px, transparent 2px, transparent 10px),
+        repeating-conic-gradient(
+            from 0deg,
+            #740001 0deg 90deg,       
+            #1a472a 90deg 180deg,     
+            #ecb939 180deg 270deg,    
+            #0e1a40 270deg 360deg     
+        );
+    background-size: 100% 100%, 120px 120px;
+    box-shadow: inset 0 0 200px rgba(0,0,0,0.7);
+    overflow: hidden;
 }
 
-.q-image.loaded {
-    opacity: 1; /* З'являється плавно коли завантажилась */
+/* Трава */
+.field-grass {
+    width: 60vh; 
+    height: 90vh; 
+    background: radial-gradient(ellipse at center, #2e5a1c 0%, #15300d 100%);
+    border: 6px solid #5a5a5a;
+    border-radius: 200px; 
+    position: relative;
+    box-shadow: 0 0 100px rgba(0,0,0,0.9); 
+    z-index: 1; 
+}
+
+/* Розмітка поля */
+.field-line { position: absolute; background: rgba(255,255,255,0.2); }
+.center-line { width: 100%; height: 2px; top: 50%; left: 0; transform: translateY(-50%); }
+.center-circle {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: 100px; height: 100px; 
+    border: 2px solid rgba(255,255,255,0.2); 
+    border-radius: 50%;
+    background: radial-gradient(circle, transparent 40%, rgba(0,0,0,0.1) 100%);
+}
+
+/* Кільця */
+.hoop-area {
+    position: absolute; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 15px; align-items: center; justify-content: center;
+    width: 140px;
+}
+.left-hoops { top: 30px; } 
+.right-hoops { bottom: 30px; }
+
+.hoop {
+    width: 18px; height: 18px; 
+    border: 3px solid #d4af37; 
+    border-radius: 50%;
+    position: relative;
+    background: rgba(0,0,0,0.3); 
+    box-shadow: 0 4px 0 #8a6d1c; 
+    z-index: 2;
+}
+.hoop::after {
+    content: ''; position: absolute;
+    width: 2px; height: 30px; background: #8a6d1c;
+    left: 50%; transform: translateX(-50%);
+    z-index: -1;
+}
+.left-hoops .hoop::after { bottom: 15px; height: 40px; } 
+.right-hoops .hoop::after { top: 15px; height: 40px; }
+.hoop:nth-child(2) { width: 28px; height: 28px; margin-top: -10px; } 
+.right-hoops .hoop:nth-child(2) { margin-top: 10px; }
+
+.stands { display: none; }
+
+/* Атмосферні гравці */
+.flying-player {
+    position: absolute; 
+    width: 8px; height: 8px; 
+    border-radius: 50%;
+    background: var(--team-color, #740001); 
+    box-shadow: 0 0 5px var(--team-color, #740001);
+    transition: all 2s cubic-bezier(0.45, 0.05, 0.55, 0.95); 
+    opacity: 0.9; z-index: 1;
+}
+.flying-player::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 24px; height: 2px; 
+    background: #8b4513; 
+    transform: translate(-50%, -50%) rotate(-15deg); 
+    z-index: -1;
+}
+.flying-player::before {
+    content: '';
+    position: absolute;
+    top: -4px; left: 1px;
+    width: 5px; height: 5px;
+    background: #ffdbac; 
+    border-radius: 50%;
+}
+
+/* UI ГРИ */
+#game-layer { position: fixed; inset: 0; z-index: 10; pointer-events: none; }
+#ui-bar {
+    position: absolute; top: 10px; left: 0; width: 100%;
+    display: flex; justify-content: space-between; padding: 0 20px;
+    box-sizing: border-box; font-size: 20px; color: #ffd700;
+    text-shadow: 0 2px 4px #000; font-weight: bold;
+}
+
+/* СНИТЧ */
+#snitch {
+    position: absolute; width: 22px; height: 22px;
+    background: radial-gradient(circle at 30% 30%, #ffd700, #b8860b);
+    border-radius: 50%;
+    box-shadow: 0 0 15px #ffd700, 0 0 30px rgba(255, 215, 0, 0.4);
+    cursor: pointer; pointer-events: auto; 
+    z-index: 100;
+    animation: snitchPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+#snitch::before, #snitch::after {
+    content: ''; position: absolute; top: 0px;
+    width: 35px; height: 14px; 
+    background: rgba(230, 230, 255, 0.7);
+    border-radius: 100% 0 50% 0; 
+    animation: flutter 0.08s infinite alternate; 
+    filter: drop-shadow(0 0 2px #fff);
+}
+#snitch::before { left: -28px; transform-origin: right center; transform: rotate(10deg); }
+#snitch::after { right: -28px; transform-origin: left center; transform: rotate(-10deg) scaleX(-1); }
+
+@keyframes flutter {
+    from { transform: rotate(10deg) scaleY(1); }
+    to { transform: rotate(-10deg) scaleY(0.6); } 
+}
+@keyframes snitchPop { from { transform: scale(0); } to { transform: scale(1); } }
+
+/* МОДАЛКИ */
+#modal-overlay {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,0.85);
+    display: flex; justify-content: center; align-items: center;
+    visibility: hidden; opacity: 0; transition: opacity 0.3s;
+}
+#modal-overlay.active { visibility: visible; opacity: 1; }
+
+.modal-card {
+    background: #1a100c; border: 2px solid #ffd700;
+    padding: 30px; border-radius: 8px; text-align: center;
+    max-width: 90%; width: 350px;
+    box-shadow: 0 0 30px rgba(255, 215, 0, 0.2);
+}
+
+/* АДАПТИВ КВІДДИЧ */
+@media (max-width: 600px) {
+    .field-grass {
+        width: 85vw; 
+        height: 75vh;
+        border-radius: 150px;
+    }
+    .hoop-area { gap: 10px; width: 100px; }
+    .hoop { width: 14px; height: 14px; }
+    .hoop:nth-child(2) { width: 22px; height: 22px; }
+}
+
+/* ОНОВЛЕНИЙ СНИТЧ (З плавним рухом) */
+#snitch {
+    position: absolute; width: 24px; height: 24px;
+    background: radial-gradient(circle at 30% 30%, #ffd700, #b8860b);
+    border-radius: 50%;
+    box-shadow: 0 0 15px #ffd700, 0 0 30px rgba(255, 215, 0, 0.6);
+    cursor: pointer; pointer-events: auto; 
+    z-index: 100;
+    
+    /* Плавний рух замість стрибків */
+    transition: left 0.4s ease-out, top 0.4s ease-out; 
+    
+    /* Анімація крилець */
+    animation: snitchHover 1s infinite alternate;
+}
+
+#snitch::before, #snitch::after {
+    content: ''; position: absolute; top: 0px;
+    width: 35px; height: 14px; 
+    background: rgba(230, 230, 255, 0.8);
+    border-radius: 100% 0 50% 0; 
+    animation: flutter 0.06s infinite alternate; /* Дуже швидкі крила */
+    filter: drop-shadow(0 0 2px #fff);
+}
+#snitch::before { left: -28px; transform-origin: right center; transform: rotate(10deg); }
+#snitch::after { right: -28px; transform-origin: left center; transform: rotate(-10deg) scaleX(-1); }
+
+@keyframes flutter {
+    from { transform: rotate(10deg) scaleY(1); }
+    to { transform: rotate(-10deg) scaleY(0.5); } 
+}
+@keyframes snitchHover {
+    from { transform: translateY(0); }
+    to { transform: translateY(-5px); }
+}
+
+/* ШЛЕЙФ КОМЕТИ (Частинки) */
+.trail-dot {
+    position: absolute;
+    width: 8px; height: 8px;
+    background: rgba(255, 215, 0, 0.6); /* Напівпрозоре золото */
+    border-radius: 50%;
+    pointer-events: none; /* Щоб не заважали клікати */
+    z-index: 90;
+    box-shadow: 0 0 6px #ffd700;
+    animation: trailFade 0.6s linear forwards; /* Зникають за 0.6с */
+}
+
+@keyframes trailFade {
+    0% { opacity: 0.8; transform: scale(1); }
+    100% { opacity: 0; transform: scale(0.2); }
+}
+
+/* ЕФЕКТ НАТИСКАННЯ (Хвиля) */
+.catch-effect {
+    position: absolute;
+    width: 60px; height: 60px;
+    border: 3px solid #fff;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 150;
+    animation: catchPop 0.4s ease-out forwards;
+    box-shadow: 0 0 15px #ffd700;
+}
+
+@keyframes catchPop {
+    0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; border-width: 5px; }
+    100% { transform: translate(-50%, -50%) scale(2); opacity: 0; border-width: 0px; }
 }

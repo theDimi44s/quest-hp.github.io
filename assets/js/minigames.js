@@ -125,19 +125,28 @@ export function startPuzzle(container, onComplete) {
     }
 }
 
-// 2. КУЛЯ (ВИПРАВЛЕНО: Куля стоїть на місці)
+// 2. КУЛЯ (Оновлено: додано картинку підставки Prophecy.png)
 export function startOrb(container, winner, onComplete, onSuccess) {
     container.innerHTML = `
         <h2 class="game-title">Зал Пророцтв</h2>
         <p class="game-instruction" id="orb-instruction">Потруси телефон, щоб розвіяти дим!</p>
-        <div class="orb-container"><div class="glass-ball" id="magic-ball"><div class="orb-glow-color" id="orb-color"></div></div></div>
-        <div id="manual-shake-hint" style="margin-top:25px; min-height: 40px; opacity:0; transition:opacity 1s; color: #aaa; font-size:14px; text-align: center;">
+        
+        <div class="orb-wrapper">
+            <img src="assets/img/Prophecy.png" class="orb-stand-img" alt="Prophecy Stand">
+            
+            <div class="glass-ball" id="magic-ball">
+                <div class="orb-glow-color" id="orb-color"></div>
+            </div>
+        </div>
+
+        <div id="manual-shake-hint" style="margin-top:10px; min-height: 40px; opacity:0; transition:opacity 1s; color: #aaa; font-size:14px; text-align: center;">
            Магія не спрацьовує? <br><button class="btn-primary" id="manual-btn" style="margin-top:10px; font-size:16px;">Натиснути на кулю</button>
         </div>
     `;
 
     addCheatButton(container, () => { triggerSuccess(); });
 
+    // ... (решта коду функції залишається без змін: const colorLayer = ... і далі)
     const colorLayer = document.getElementById('orb-color');
     const instruction = document.getElementById('orb-instruction');
     const ball = document.getElementById('magic-ball');
@@ -174,9 +183,6 @@ export function startOrb(container, winner, onComplete, onSuccess) {
     function handleMotion(event) {
         if(isCompleted) return;
         const acc = event.accelerationIncludingGravity; if (!acc) return;
-        
-        // --- ВИДАЛЕНО РЯДОК ЗМІЩЕННЯ (ball.style.transform) ---
-        
         if (lastX !== null) {
             if ((Math.abs(acc.x-lastX) + Math.abs(acc.y-lastY) + Math.abs(acc.z-lastZ)) > shakeThreshold) triggerSuccess();
         }

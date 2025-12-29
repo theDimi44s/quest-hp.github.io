@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Турнір з Квіддичу</title>
+    <link href="https://fonts.cdnfonts.com/css/harry-potter" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <style>
+        /* Додаткові стилі специфічно для цієї сторінки, щоб не перевантажувати styles.css */
+        body { overflow: hidden; background: #1a1a1a; touch-action: none; }
+    </style>
+</head>
+<body>
+    
+    <div id="quidditch-field">
+        <div class="field-grass">
+            <div class="field-line center-line"></div>
+            <div class="field-circle center-circle"></div>
+            <div class="hoop-area left-hoops">
+                <div class="hoop"></div><div class="hoop"></div><div class="hoop"></div>
+            </div>
+            <div class="hoop-area right-hoops">
+                <div class="hoop"></div><div class="hoop"></div><div class="hoop"></div>
+            </div>
+        </div>
+        <div class="stands top-stand"></div>
+        <div class="stands bottom-stand"></div>
+    </div>
+
+    <div id="ambient-layer"></div>
+
+    <div id="game-layer">
+        <div id="ui-bar">
+            <div class="score-box">Рахунок: <span id="score-val">0</span></div>
+            <div class="lives-box">Помилки: <span id="miss-val">0</span>/5</div>
+        </div>
+        </div>
+
+    <div id="modal-overlay" class="active">
+        
+        <div id="start-modal" class="modal-card">
+            <h1 class="game-title" style="margin-top:0; font-size: 2.2rem;">Квіддич</h1>
+            <p class="game-instruction">Вітаємо у інтерактивній грі!</p>
+            <p style="font-family: sans-serif; opacity: 0.8; font-size: 14px; margin-bottom: 20px;">
+                Спіймай Золотий Снитч, перш ніж він зникне.<br>
+                Стережись! Він стає швидшим.
+            </p>
+            <button id="btn-start-game" class="btn-primary">Почати матч</button>
+        </div>
+
+        <div id="end-modal" class="modal-card" style="display: none;">
+            <h2 class="game-title" style="margin-top:0; font-size: 2rem;">Матч завершено!</h2>
+            <p class="game-instruction" id="final-score-text">Твій результат: 0</p>
+            <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                <button id="btn-restart" class="btn-primary" style="font-size: 16px;">Спробувати ще</button>
+                <button id="btn-next-level" class="btn-primary" style="font-size: 16px; background: #1a472a;">Рухатись далі</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="assets/js/quidditch.js"></script>
+</body>
+</html>
